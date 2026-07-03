@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com" rel="preconnect" />
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,500;1,9..144,600&display=swap"
         rel="stylesheet" />
     <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
@@ -21,12 +21,14 @@
             theme: {
                 extend: {
                     colors: {
-                        primary: "#3b82f6",
-                        "background-light": "#f8fafc",
-                        "background-dark": "#0f172a",
+                        primary: "#9BB0C2",
+                        "primary-bright": "#EDF2F5",
+                        sapphire: "#16324F",
+                        "background-light": "#F5F4F1",
+                        "background-dark": "#0B0D10",
                     },
                     fontFamily: {
-                        display: ["Playfair Display", "serif"],
+                        display: ["Fraunces", "serif"],
                         sans: ["Inter", "sans-serif"],
                     },
                 },
@@ -34,14 +36,28 @@
         };
     </script>
     <style>
+        /* ── Fine paper-grain texture (the one signature flourish) ── */
+        body {
+            position: relative;
+            background-image:
+                radial-gradient(circle at 1.5px 1.5px, rgba(155, 176, 194, 0.16) 1px, transparent 0);
+            background-size: 22px 22px;
+        }
+
+        html:not(.dark) body {
+            background-image:
+                radial-gradient(circle at 1.5px 1.5px, rgba(92, 108, 120, 0.09) 1px, transparent 0);
+            background-size: 22px 22px;
+        }
+
         /* ── Sidebar portrait height responsive ── */
         .portrait-wrap {
-            height: 280px;
+            height: 300px;
         }
 
         @media (min-width: 1024px) {
             .portrait-wrap {
-                height: 340px;
+                height: 360px;
             }
         }
 
@@ -51,7 +67,7 @@
                 position: relative !important;
                 width: 100% !important;
                 border-right: none !important;
-                border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+                border-bottom: 1px solid rgba(155, 176, 194, 0.25);
             }
 
             .main-content {
@@ -59,10 +75,32 @@
             }
         }
 
+        /* ── Monogram seal (brushed platinum medallion) ── */
+        .seal {
+            width: 64px;
+            height: 64px;
+            border-radius: 9999px;
+            background: radial-gradient(circle at 32% 28%, #F4F7F9, #9BB0C2 55%, #4E5D68 100%);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .seal span {
+            font-family: "Fraunces", serif;
+            font-style: italic;
+            font-weight: 600;
+            font-size: 1.75rem;
+            color: #1A222B;
+        }
+
         /* ── Skill bar animation ── */
         .skill-bar-fill {
             width: 0;
             transition: width 1.2s cubic-bezier(.4, 0, .2, 1);
+            background: linear-gradient(90deg, #5C6C78, #9BB0C2 55%, #EDF2F5);
         }
 
         .skill-bar-fill.animate {
@@ -71,12 +109,13 @@
 
         /* ── Card hover lift ── */
         .lift-card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
         }
 
         .lift-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 20px 40px rgba(59, 130, 246, 0.12);
+            box-shadow: 0 20px 40px rgba(155, 176, 194, 0.16);
+            border-color: rgba(155, 176, 194, 0.4);
         }
 
         /* ── Tag pill ── */
@@ -90,15 +129,16 @@
 
         /* ── Competency hover ── */
         .competency-card .icon-wrap {
-            transition: background 0.25s, color 0.25s;
+            transition: background 0.25s, color 0.25s, border-color 0.25s;
         }
 
         .competency-card:hover .icon-wrap {
-            background: #3b82f6;
-            color: #fff;
+            background: linear-gradient(135deg, #EDF2F5, #9BB0C2);
+            color: #1A222B;
+            border-color: transparent;
         }
 
-        /* ── Section divider ── */
+        /* ── Section divider — hairline with a platinum pip ── */
         .divider-title {
             display: flex;
             align-items: center;
@@ -109,7 +149,40 @@
         .divider-title span.line {
             flex: 1;
             height: 1px;
-            background: rgba(148, 163, 184, 0.3);
+            background: linear-gradient(90deg, rgba(155, 176, 194, 0), rgba(155, 176, 194, 0.5) 50%, rgba(155, 176, 194, 0));
+        }
+
+        .divider-title span.line:first-child {
+            background: linear-gradient(90deg, rgba(155, 176, 194, 0), rgba(155, 176, 194, 0.5));
+        }
+
+        .divider-title span.line:last-child {
+            background: linear-gradient(90deg, rgba(155, 176, 194, 0.5), rgba(155, 176, 194, 0));
+        }
+
+        /* ── Accessible focus states (platinum, always visible) ── */
+        a:focus-visible,
+        button:focus-visible {
+            outline: 2px solid #9BB0C2;
+            outline-offset: 3px;
+            border-radius: 4px;
+        }
+
+        /* ── Respect reduced-motion preference ── */
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.001ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.001ms !important;
+                scroll-behavior: auto !important;
+            }
+
+            .skill-bar-fill {
+                width: var(--target-width) !important;
+            }
         }
 
         /* ── Mobile nav spacing fix ── */
@@ -123,101 +196,110 @@
 </head>
 
 <body
-    class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 transition-colors duration-300 font-sans">
+    class="bg-background-light dark:bg-background-dark text-stone-800 dark:text-stone-200 transition-colors duration-300 font-sans">
     <div class="flex flex-col lg:flex-row min-h-screen">
 
         <!-- ═══ SIDEBAR ═══ -->
         <aside
-            class="sidebar lg:w-80 xl:w-96 lg:fixed lg:inset-y-0 lg:left-0 z-50 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 overflow-y-auto">
+            class="sidebar lg:w-80 xl:w-96 lg:fixed lg:inset-y-0 lg:left-0 z-50 bg-white dark:bg-stone-900 border-r border-stone-200 dark:border-stone-800 overflow-y-auto">
 
             <!-- Portrait -->
             <div class="portrait-wrap relative w-full overflow-hidden">
-                <img alt="Dinesh Portrait" class="w-full h-full object-cover object-top transition duration-700"
+                <img alt="Portrait of Dinesh" class="w-full h-full object-cover object-top transition duration-700"
                     src="img/dini.png"
-                    onerror="this.src='https://ui-avatars.com/api/?name=Dinesh&size=400&background=0f172a&color=3b82f6&bold=true&font-size=0.4'" />
-                <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent"></div>
+                    onerror="this.src='https://ui-avatars.com/api/?name=Dinesh&size=400&background=0b0d10&color=9BB0C2&bold=true&font-size=0.4'" />
+                <div class="absolute inset-0 bg-gradient-to-t from-[#0B0D10] via-[#0B0D10]/25 to-transparent"></div>
+                <div class="absolute inset-0 ring-1 ring-inset ring-primary/20"></div>
+                <div class="seal absolute top-5 right-5" aria-hidden="true"><span>D</span></div>
                 <div class="absolute bottom-5 left-6 right-6">
-                    <h1 class="font-display text-2xl sm:text-3xl text-white font-bold leading-tight">Dinesh</h1>
-                    <p class="text-primary uppercase text-xs mt-1 tracking-wider">UI/UX Strategist · Front-end Innovator
+                    <h1 class="font-display italic text-3xl sm:text-4xl text-white font-semibold leading-tight">Dinesh
+                    </h1>
+                    <p class="text-primary uppercase text-xs mt-1.5 tracking-[0.15em]">UI/UX Strategist · Front-end
+                        Innovator</p>
+                    <p class="font-display text-lg text-primary-bright font-semibold leading-tight mt-3">amortree tech
                     </p>
-                    <p class="font-display text-xl text-white font-bold leading-tight mt-2">amortree tech</p>
-                    <p class="text-primary uppercase text-xs mt-0.5 tracking-wider">Chief Executive Officer</p>
+                    <p class="text-stone-300 uppercase text-[0.65rem] mt-0.5 tracking-[0.15em]">Founder &amp; CEO
+                    </p>
                 </div>
             </div>
 
             <!-- Sidebar body -->
             <div class="p-6 space-y-7">
 
-                <!-- Vision -->
-                <div>
-                    <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Vision</h3>
-                    <p class="text-slate-600 dark:text-slate-400 italic leading-relaxed text-sm">
-                        "Passionate about building intuitive interfaces, optimising user experiences, and developing
-                        modern web applications that put people first."
-                    </p>
-                </div>
-
-                <!-- Core Focus -->
-                <div>
-                    <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Core Focus</h3>
-                    <div class="flex flex-wrap gap-2">
-                        <span
-                            class="px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full text-xs font-medium">Dreamer</span>
-                        <span
-                            class="px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full text-xs font-medium">Designer</span>
-                        <span
-                            class="px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full text-xs font-medium">Developer</span>
-                    </div>
-                </div>
-
-                <!-- Skills -->
-                <div>
-                    <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Skills</h3>
-                    <div class="space-y-3" id="skill-bars">
-                        <!-- bars injected by JS -->
-                    </div>
-                </div>
-
-                <!-- Connect -->
-                <div>
-                    <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Connect</h3>
-                    <div class="flex flex-wrap gap-3">
-                        <a class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-primary hover:text-white transition-all"
-                            href="mailto:dineshwbd@gmail.com" title="Email">
-                            <span class="material-symbols-outlined text-xl">alternate_email</span>
-                        </a>
-                        <a class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-primary hover:text-white transition-all"
-                            href="https://amortree.com" title="Website">
-                            <span class="material-symbols-outlined text-xl">link</span>
-                        </a>
-                        <a class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-primary hover:text-white transition-all"
-                            href="tel:+918892678712" title="Call">
-                            <span class="material-symbols-outlined text-xl">call</span>
-                        </a>
-                    </div>
-                </div>
-
                 <!-- Social + CTA -->
                 <div class="flex flex-wrap items-center gap-3">
-                    <a class="w-10 h-10 flex items-center justify-center rounded-lg bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 hover:border-primary transition-colors"
-                        href="https://www.linkedin.com/in/dineshdesign/" title="LinkedIn">
+                    <a class="w-10 h-10 flex items-center justify-center rounded-lg bg-white dark:bg-stone-800 shadow-sm border border-stone-200 dark:border-stone-700 hover:border-primary text-stone-600 dark:text-stone-300 hover:text-primary transition-colors"
+                        href="https://www.linkedin.com/in/dineshdesign/" title="LinkedIn" target="_blank" rel="noopener"
+                        aria-label="Dinesh on LinkedIn">
                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                             <path
                                 d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.761 0 5-2.239 5-5v-14c0-2.761-2.239-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
                         </svg>
                     </a>
-                    <a class="w-10 h-10 flex items-center justify-center rounded-lg bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 hover:border-primary transition-colors"
-                        href="https://github.com/dineshann" title="GitHub">
+                    <a class="w-10 h-10 flex items-center justify-center rounded-lg bg-white dark:bg-stone-800 shadow-sm border border-stone-200 dark:border-stone-700 hover:border-primary text-stone-600 dark:text-stone-300 hover:text-primary transition-colors"
+                        href="https://github.com/dineshann" title="GitHub" target="_blank" rel="noopener"
+                        aria-label="Dinesh on GitHub">
                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                             <path
                                 d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.041-1.416-4.041-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.91 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
                         </svg>
                     </a>
-                    <a class="px-5 py-2 bg-primary hover:bg-blue-700 text-white font-semibold rounded-lg flex items-center gap-2 transition-all shadow-lg shadow-primary/20 text-sm"
+                    <a class="px-5 py-2 bg-gradient-to-r from-primary to-primary-bright hover:brightness-110 text-stone-950 font-semibold rounded-lg flex items-center gap-2 transition-all shadow-lg shadow-primary/20 text-sm"
                         href="mailto:hi@amortree.com">
                         <span class="material-symbols-outlined text-sm">mail</span>
                         Hire Me
                     </a>
+                </div>
+
+                <!-- Core Focus -->
+                <div>
+                    <h3 class="text-xs font-bold uppercase tracking-[0.2em] text-primary/80 mb-3">Core Focus</h3>
+                    <div class="flex flex-wrap gap-2">
+                        <span
+                            class="px-3 py-1 border border-primary/40 text-primary rounded-full text-xs font-medium">Dreamer</span>
+                        <span
+                            class="px-3 py-1 border border-primary/40 text-primary rounded-full text-xs font-medium">Designer</span>
+                        <span
+                            class="px-3 py-1 border border-primary/40 text-primary rounded-full text-xs font-medium">Developer</span>
+                    </div>
+                </div>
+
+                <!-- Vision -->
+                <div>
+                    <h3 class="text-xs font-bold uppercase tracking-[0.2em] text-primary/80 mb-3">Vision</h3>
+                    <p class="font-display italic text-stone-700 dark:text-stone-300 leading-relaxed text-[0.95rem]">
+                        <span class="text-primary text-2xl align-top leading-none">&ldquo;</span>Passionate about
+                        building intuitive interfaces, optimising user experiences, and developing modern web
+                        applications that put people first.<span
+                            class="text-primary text-2xl align-bottom leading-none">&rdquo;</span>
+                    </p>
+                </div>
+
+                <!-- Connect -->
+                <div>
+                    <h3 class="text-xs font-bold uppercase tracking-[0.2em] text-primary/80 mb-3">Connect</h3>
+                    <div class="flex flex-wrap gap-3">
+                        <a class="w-10 h-10 flex items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 hover:bg-primary hover:text-stone-950 text-stone-600 dark:text-stone-300 transition-all"
+                            href="mailto:dineshwbd@gmail.com" title="Email" aria-label="Email Dinesh">
+                            <span class="material-symbols-outlined text-xl">alternate_email</span>
+                        </a>
+                        <a class="w-10 h-10 flex items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 hover:bg-primary hover:text-stone-950 text-stone-600 dark:text-stone-300 transition-all"
+                            href="https://amortree.com" title="Website" aria-label="Visit amortree.com">
+                            <span class="material-symbols-outlined text-xl">link</span>
+                        </a>
+                        <a class="w-10 h-10 flex items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 hover:bg-primary hover:text-stone-950 text-stone-600 dark:text-stone-300 transition-all"
+                            href="tel:+918892678712" title="Call" aria-label="Call Dinesh">
+                            <span class="material-symbols-outlined text-xl">call</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Skills -->
+                <div>
+                    <h3 class="text-xs font-bold uppercase tracking-[0.2em] text-primary/80 mb-4">Skills</h3>
+                    <div class="space-y-3" id="skill-bars">
+                        <!-- bars injected by JS -->
+                    </div>
                 </div>
 
             </div>
@@ -234,51 +316,51 @@
                 </h2>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div
-                        class="lift-card p-7 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+                        class="lift-card p-7 rounded-2xl bg-white dark:bg-stone-800 border border-stone-100 dark:border-stone-700">
                         <div
                             class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-5">
                             <span class="material-symbols-outlined text-2xl">design_services</span>
                         </div>
                         <h3 class="text-xl font-bold mb-3">10+ Years in Front-end</h3>
-                        <p class="text-slate-500 dark:text-slate-400 leading-relaxed text-sm">
+                        <p class="text-stone-500 dark:text-stone-400 leading-relaxed text-sm">
                             Across a decade spanning startups and established companies, built performant, accessible
                             web interfaces used by thousands — blending pixel-perfect design with clean, maintainable
                             code.
                         </p>
                     </div>
                     <div
-                        class="lift-card p-7 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+                        class="lift-card p-7 rounded-2xl bg-white dark:bg-stone-800 border border-stone-100 dark:border-stone-700">
                         <div
                             class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-5">
-                            <span class="material-symbols-outlined text-2xl">rocket_launch</span>
+                            <img src="https://amortree.com/assets/favicon-DWfsGvND.png" alt="Profile Image" class="w-full h-full object-cover rounded-lg" />
                         </div>
                         <h3 class="text-xl font-bold mb-3">Amortree Tech Founded</h3>
-                        <p class="text-slate-500 dark:text-slate-400 leading-relaxed text-sm">
+                        <p class="text-stone-500 dark:text-stone-400 leading-relaxed text-sm">
                             Founded and leads Amortree Tech as CEO — a product studio focused on modern web
                             applications, UI/UX consulting, and digital experiences crafted for real-world impact.
                         </p>
                     </div>
                     <div
-                        class="lift-card p-7 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+                        class="lift-card p-7 rounded-2xl bg-white dark:bg-stone-800 border border-stone-100 dark:border-stone-700">
                         <div
                             class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-5">
                             <span class="material-symbols-outlined text-2xl">palette</span>
                         </div>
                         <h3 class="text-xl font-bold mb-3">Design Meets Engineering</h3>
-                        <p class="text-slate-500 dark:text-slate-400 leading-relaxed text-sm">
+                        <p class="text-stone-500 dark:text-stone-400 leading-relaxed text-sm">
                             Fluent across the full design-to-development pipeline — from wireframes and prototypes in
                             Figma to production-ready code — removing friction between design vision and shipped
                             product.
                         </p>
                     </div>
                     <div
-                        class="lift-card p-7 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+                        class="lift-card p-7 rounded-2xl bg-white dark:bg-stone-800 border border-stone-100 dark:border-stone-700">
                         <div
                             class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-5">
                             <span class="material-symbols-outlined text-2xl">devices</span>
                         </div>
                         <h3 class="text-xl font-bold mb-3">Responsive-First Thinking</h3>
-                        <p class="text-slate-500 dark:text-slate-400 leading-relaxed text-sm">
+                        <p class="text-stone-500 dark:text-stone-400 leading-relaxed text-sm">
                             Every interface crafted with a mobile-first approach — ensuring seamless experience across
                             all viewports, from wrist to widescreen, with performance baked in from the start.
                         </p>
@@ -290,22 +372,22 @@
             <section class="p-6 lg:p-12 xl:px-20 xl:py-6 mb-6">
                 <div class="divider-title">
                     <span class="line"></span>
-                    <h2 class="font-display text-3xl sm:text-4xl dark:text-white whitespace-nowrap">Featured Work</h2>
+                    <h2 class="font-display text-2xl sm:text-4xl dark:text-white whitespace-nowrap">Featured Work</h2>
                     <span class="line"></span>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
 
                     <!-- Card 1 -->
                     <div
-                        class="lift-card group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
+                        class="lift-card group relative bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl overflow-hidden">
                         <div
-                            class="h-44 overflow-hidden bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center">
-                            <span class="material-symbols-outlined text-white/30" style="font-size:6rem">language</span>
+                            class="h-44 overflow-hidden bg-gradient-to-br from-[#1C2733] via-[#0F151C] to-stone-950 flex items-center justify-center">
+                            <img src="https://demo.amortree.com/assets/img/og-image.png" alt="Amortree Tech website preview" class="w-full h-full object-cover">
                         </div>
                         <div class="p-5">
                             <p class="text-primary text-xs font-bold uppercase tracking-wider mb-1">Product Studio</p>
                             <h3 class="text-lg font-bold mb-2 dark:text-white">Amortree Tech</h3>
-                            <p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-4">
+                            <p class="text-stone-500 dark:text-stone-400 text-sm leading-relaxed mb-4">
                                 Founded and built the company website, brand identity, and product offerings — a full
                                 end-to-end exercise in design, development, and strategic positioning.
                             </p>
@@ -318,16 +400,16 @@
 
                     <!-- Card 2 -->
                     <div
-                        class="lift-card group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
+                        class="lift-card group relative bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl overflow-hidden">
                         <div
-                            class="h-44 overflow-hidden bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center">
-                            <span class="material-symbols-outlined text-white/30" style="font-size:6rem">web</span>
+                            class="h-44 overflow-hidden bg-gradient-to-br from-stone-800 to-stone-950 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-stone-500" style="font-size:6rem">web</span>
                         </div>
                         <div class="p-5">
                             <p class="text-primary text-xs font-bold uppercase tracking-wider mb-1">Front-end
                                 Engineering</p>
                             <h3 class="text-lg font-bold mb-2 dark:text-white">Annanta Source — 9 Years</h3>
-                            <p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-4">
+                            <p class="text-stone-500 dark:text-stone-400 text-sm leading-relaxed mb-4">
                                 Delivered complex, scalable front-end solutions as a lead developer — translating design
                                 specs into robust, cross-browser UI components over a 9-year tenure.
                             </p>
@@ -340,15 +422,16 @@
 
                     <!-- Card 3 -->
                     <div
-                        class="lift-card group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
+                        class="lift-card group relative bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl overflow-hidden">
                         <div
-                            class="h-44 overflow-hidden bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
-                            <span class="material-symbols-outlined text-white/30" style="font-size:6rem">brush</span>
+                            class="h-44 overflow-hidden bg-gradient-to-br from-sapphire to-stone-950 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-primary-bright/40"
+                                style="font-size:6rem">brush</span>
                         </div>
                         <div class="p-5">
                             <p class="text-primary text-xs font-bold uppercase tracking-wider mb-1">UI/UX Design</p>
                             <h3 class="text-lg font-bold mb-2 dark:text-white">UX Strategy &amp; Consulting</h3>
-                            <p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-4">
+                            <p class="text-stone-500 dark:text-stone-400 text-sm leading-relaxed mb-4">
                                 Provides UX strategy, wireframing, prototyping, and design-system consulting — helping
                                 teams move from vague concepts to user-validated, polished interfaces.
                             </p>
@@ -366,77 +449,76 @@
             <section class="p-6 lg:p-12 xl:px-20 xl:py-6 mb-6">
                 <div class="divider-title">
                     <span class="line"></span>
-                    <h2 class="font-display text-3xl sm:text-4xl dark:text-white whitespace-nowrap">Career Trajectory
+                    <h2 class="font-display text-2xl sm:text-4xl dark:text-white whitespace-nowrap">Career Trajectory
                     </h2>
                     <span class="line"></span>
                 </div>
                 <div class="space-y-4 max-w-4xl mx-auto">
 
                     <div
-                        class="lift-card p-5 sm:p-6 bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl">
+                        class="lift-card p-5 sm:p-6 bg-white dark:bg-stone-900/50 border border-stone-200 dark:border-stone-800 rounded-xl">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <div class="flex items-start gap-4">
                                 <div
                                     class="w-11 h-11 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                                    <span class="material-symbols-outlined text-primary text-xl">corporate_fare</span>
+                                    <img src="https://amortree.com/assets/favicon-DWfsGvND.png" alt="Profile Image" class="w-full h-full object-cover rounded-lg" />
                                 </div>
                                 <div>
-                                    <h4 class="text-base font-bold dark:text-white leading-tight">Chief Executive
-                                        Officer</h4>
+                                    <h4 class="text-base font-bold dark:text-white leading-tight">Founder &amp; CEO</h4>
                                     <p class="text-primary text-sm font-medium mt-0.5">Amortree Tech Pvt Ltd</p>
-                                    <p class="text-slate-400 text-xs mt-1">Founded and leads the company — product
+                                    <p class="text-stone-400 text-xs mt-1">Founded and leads the company — product
                                         strategy, design direction, client work, and team building.</p>
                                 </div>
                             </div>
                             <div class="pl-[60px] sm:pl-0 sm:text-right shrink-0">
                                 <p class="text-sm font-bold dark:text-white">2024 — Present</p>
-                                <p class="text-xs text-slate-500">Bengaluru, India</p>
+                                <p class="text-xs text-stone-500">Bengaluru, India</p>
                             </div>
                         </div>
                     </div>
 
                     <div
-                        class="lift-card p-5 sm:p-6 bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl">
+                        class="lift-card p-5 sm:p-6 bg-white dark:bg-stone-900/50 border border-stone-200 dark:border-stone-800 rounded-xl">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <div class="flex items-start gap-4">
                                 <div
-                                    class="w-11 h-11 rounded-lg bg-slate-200 dark:bg-slate-800 flex items-center justify-center shrink-0">
-                                    <span class="material-symbols-outlined text-slate-500 text-xl">code</span>
+                                    class="w-11 h-11 rounded-lg bg-stone-200 dark:bg-stone-800 flex items-center justify-center shrink-0">
+                                    <span class="material-symbols-outlined text-stone-500 text-xl">code</span>
                                 </div>
                                 <div>
                                     <h4 class="text-base font-bold dark:text-white leading-tight">Front-end Developer
                                     </h4>
-                                    <p class="text-slate-500 text-sm font-medium mt-0.5">Annanta Source LLC</p>
-                                    <p class="text-slate-400 text-xs mt-1">9-year tenure delivering complex, scalable UI
+                                    <p class="text-stone-500 text-sm font-medium mt-0.5">Annanta Source LLC</p>
+                                    <p class="text-stone-400 text-xs mt-1">9-year tenure delivering complex, scalable UI
                                         solutions across diverse client projects and products.</p>
                                 </div>
                             </div>
                             <div class="pl-[60px] sm:pl-0 sm:text-right shrink-0">
                                 <p class="text-sm font-bold dark:text-white">2015 — 2024</p>
-                                <p class="text-xs text-slate-500">Bengaluru, India</p>
+                                <p class="text-xs text-stone-500">Bengaluru, India</p>
                             </div>
                         </div>
                     </div>
 
                     <div
-                        class="lift-card p-5 sm:p-6 bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl">
+                        class="lift-card p-5 sm:p-6 bg-white dark:bg-stone-900/50 border border-stone-200 dark:border-stone-800 rounded-xl">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <div class="flex items-start gap-4">
                                 <div
-                                    class="w-11 h-11 rounded-lg bg-slate-200 dark:bg-slate-800 flex items-center justify-center shrink-0">
-                                    <span class="material-symbols-outlined text-slate-500 text-xl">brush</span>
+                                    class="w-11 h-11 rounded-lg bg-stone-200 dark:bg-stone-800 flex items-center justify-center shrink-0">
+                                    <span class="material-symbols-outlined text-stone-500 text-xl">brush</span>
                                 </div>
                                 <div>
                                     <h4 class="text-base font-bold dark:text-white leading-tight">Web Designer</h4>
-                                    <p class="text-slate-500 text-sm font-medium mt-0.5">Canigenus Technologies Pvt Ltd
+                                    <p class="text-stone-500 text-sm font-medium mt-0.5">Canigenus Technologies Pvt Ltd
                                     </p>
-                                    <p class="text-slate-400 text-xs mt-1">Started the professional journey crafting web
+                                    <p class="text-stone-400 text-xs mt-1">Started the professional journey crafting web
                                         designs and interactive UI layouts.</p>
                                 </div>
                             </div>
                             <div class="pl-[60px] sm:pl-0 sm:text-right shrink-0">
                                 <p class="text-sm font-bold dark:text-white">2013 — 2015</p>
-                                <p class="text-xs text-slate-500">Bengaluru, India</p>
+                                <p class="text-xs text-stone-500">Bengaluru, India</p>
                             </div>
                         </div>
                     </div>
@@ -448,16 +530,16 @@
             <section class="p-6 lg:p-12 xl:px-20 xl:py-6 mb-6">
                 <div class="divider-title">
                     <span class="line"></span>
-                    <h2 class="font-display text-3xl sm:text-4xl dark:text-white whitespace-nowrap">Core Competencies
+                    <h2 class="font-display text-2xl sm:text-4xl dark:text-white whitespace-nowrap">Core Competencies
                     </h2>
                     <span class="line"></span>
                 </div>
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
 
                     <div
-                        class="competency-card p-5 sm:p-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col items-center text-center group hover:border-primary transition-all duration-300">
+                        class="competency-card p-5 sm:p-7 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl flex flex-col items-center text-center group hover:border-primary transition-all duration-300">
                         <div
-                            class="icon-wrap w-14 h-14 mb-3 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-full">
+                            class="icon-wrap w-14 h-14 mb-3 flex items-center justify-center bg-stone-100 dark:bg-stone-800 rounded-full">
                             <span class="material-symbols-outlined text-2xl">palette</span>
                         </div>
                         <h4 class="font-bold text-xs tracking-widest uppercase dark:text-white leading-snug">UI/UX
@@ -465,9 +547,9 @@
                     </div>
 
                     <div
-                        class="competency-card p-5 sm:p-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col items-center text-center group hover:border-primary transition-all duration-300">
+                        class="competency-card p-5 sm:p-7 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl flex flex-col items-center text-center group hover:border-primary transition-all duration-300">
                         <div
-                            class="icon-wrap w-14 h-14 mb-3 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-full">
+                            class="icon-wrap w-14 h-14 mb-3 flex items-center justify-center bg-stone-100 dark:bg-stone-800 rounded-full">
                             <span class="material-symbols-outlined text-2xl">code</span>
                         </div>
                         <h4 class="font-bold text-xs tracking-widest uppercase dark:text-white leading-snug">Front-end
@@ -475,9 +557,9 @@
                     </div>
 
                     <div
-                        class="competency-card p-5 sm:p-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col items-center text-center group hover:border-primary transition-all duration-300">
+                        class="competency-card p-5 sm:p-7 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl flex flex-col items-center text-center group hover:border-primary transition-all duration-300">
                         <div
-                            class="icon-wrap w-14 h-14 mb-3 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-full">
+                            class="icon-wrap w-14 h-14 mb-3 flex items-center justify-center bg-stone-100 dark:bg-stone-800 rounded-full">
                             <span class="material-symbols-outlined text-2xl">auto_awesome_mosaic</span>
                         </div>
                         <h4 class="font-bold text-xs tracking-widest uppercase dark:text-white leading-snug">Design
@@ -485,9 +567,9 @@
                     </div>
 
                     <div
-                        class="competency-card p-5 sm:p-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col items-center text-center group hover:border-primary transition-all duration-300">
+                        class="competency-card p-5 sm:p-7 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl flex flex-col items-center text-center group hover:border-primary transition-all duration-300">
                         <div
-                            class="icon-wrap w-14 h-14 mb-3 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-full">
+                            class="icon-wrap w-14 h-14 mb-3 flex items-center justify-center bg-stone-100 dark:bg-stone-800 rounded-full">
                             <span class="material-symbols-outlined text-2xl">devices</span>
                         </div>
                         <h4 class="font-bold text-xs tracking-widest uppercase dark:text-white leading-snug">Responsive
@@ -495,9 +577,9 @@
                     </div>
 
                     <div
-                        class="competency-card p-5 sm:p-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col items-center text-center group hover:border-primary transition-all duration-300">
+                        class="competency-card p-5 sm:p-7 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl flex flex-col items-center text-center group hover:border-primary transition-all duration-300">
                         <div
-                            class="icon-wrap w-14 h-14 mb-3 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-full">
+                            class="icon-wrap w-14 h-14 mb-3 flex items-center justify-center bg-stone-100 dark:bg-stone-800 rounded-full">
                             <span class="material-symbols-outlined text-2xl">edit_note</span>
                         </div>
                         <h4 class="font-bold text-xs tracking-widest uppercase dark:text-white leading-snug">Prototyping
@@ -505,9 +587,9 @@
                     </div>
 
                     <div
-                        class="competency-card p-5 sm:p-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col items-center text-center group hover:border-primary transition-all duration-300">
+                        class="competency-card p-5 sm:p-7 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl flex flex-col items-center text-center group hover:border-primary transition-all duration-300">
                         <div
-                            class="icon-wrap w-14 h-14 mb-3 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-full">
+                            class="icon-wrap w-14 h-14 mb-3 flex items-center justify-center bg-stone-100 dark:bg-stone-800 rounded-full">
                             <span class="material-symbols-outlined text-2xl">speed</span>
                         </div>
                         <h4 class="font-bold text-xs tracking-widest uppercase dark:text-white leading-snug">Performance
@@ -515,9 +597,9 @@
                     </div>
 
                     <div
-                        class="competency-card p-5 sm:p-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col items-center text-center group hover:border-primary transition-all duration-300">
+                        class="competency-card p-5 sm:p-7 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl flex flex-col items-center text-center group hover:border-primary transition-all duration-300">
                         <div
-                            class="icon-wrap w-14 h-14 mb-3 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-full">
+                            class="icon-wrap w-14 h-14 mb-3 flex items-center justify-center bg-stone-100 dark:bg-stone-800 rounded-full">
                             <span class="material-symbols-outlined text-2xl">accessibility_new</span>
                         </div>
                         <h4 class="font-bold text-xs tracking-widest uppercase dark:text-white leading-snug">
@@ -525,9 +607,9 @@
                     </div>
 
                     <div
-                        class="competency-card p-5 sm:p-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col items-center text-center group hover:border-primary transition-all duration-300">
+                        class="competency-card p-5 sm:p-7 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl flex flex-col items-center text-center group hover:border-primary transition-all duration-300">
                         <div
-                            class="icon-wrap w-14 h-14 mb-3 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-full">
+                            class="icon-wrap w-14 h-14 mb-3 flex items-center justify-center bg-stone-100 dark:bg-stone-800 rounded-full">
                             <span class="material-symbols-outlined text-2xl">corporate_fare</span>
                         </div>
                         <h4 class="font-bold text-xs tracking-widest uppercase dark:text-white leading-snug">Product
@@ -540,18 +622,18 @@
             <!-- ── Footer spacer ── -->
             <footer class="mt-6 mb-16 text-center px-6">
                 <h2
-                    class="font-display text-6xl sm:text-8xl md:text-9xl text-slate-100 dark:text-slate-800/50 select-none">
+                    class="font-display italic text-6xl sm:text-8xl md:text-9xl text-stone-200/70 dark:text-primary/10 select-none">
                     Design.</h2>
             </footer>
 
             <!-- ── Future Vision (dark) ── -->
-            <section class="p-8 lg:p-16 xl:p-20 bg-slate-900 text-white dark:bg-slate-950" id="future">
+            <section class="p-8 lg:p-16 xl:p-20 bg-stone-900 text-white dark:bg-stone-950" id="future">
                 <h2 class="text-3xl lg:text-5xl font-display font-bold mb-10 flex items-center gap-4">
                     <span class="w-12 h-1 bg-primary rounded-full"></span>
                     What I'm Building Next
                 </h2>
                 <div class="max-w-none">
-                    <p class="text-lg text-slate-400 leading-relaxed mb-10">
+                    <p class="text-lg text-stone-400 leading-relaxed mb-10">
                         The web is moving fast — AI-assisted design, component-driven architecture, and zero-latency
                         interfaces are reshaping expectations. At Amortree Tech, the focus is on staying ahead: building
                         tools and products that feel genuinely delightful to use.
@@ -560,14 +642,14 @@
                         <div class="space-y-3">
                             <h4 class="text-primary font-bold uppercase tracking-widest text-xs">Focus Area 01</h4>
                             <h3 class="text-xl font-bold">AI-Enhanced UX</h3>
-                            <p class="text-slate-400 text-sm leading-relaxed">Exploring how AI can streamline design
+                            <p class="text-stone-400 text-sm leading-relaxed">Exploring how AI can streamline design
                                 workflows — from auto-generating component variants to intelligent layout suggestions —
                                 without removing the human craft.</p>
                         </div>
                         <div class="space-y-3">
                             <h4 class="text-primary font-bold uppercase tracking-widest text-xs">Focus Area 02</h4>
                             <h3 class="text-xl font-bold">Design-System Scale</h3>
-                            <p class="text-slate-400 text-sm leading-relaxed">Helping teams build cohesive, token-based
+                            <p class="text-stone-400 text-sm leading-relaxed">Helping teams build cohesive, token-based
                                 design systems that let products grow without losing visual consistency or developer
                                 velocity.</p>
                         </div>
@@ -576,14 +658,15 @@
 
                 <!-- CTA -->
                 <div
-                    class="mt-16 flex flex-col sm:flex-row items-start sm:items-center justify-between p-8 sm:p-12 rounded-3xl bg-gradient-to-br from-primary/20 to-transparent border border-white/10 gap-6">
+                    class="mt-16 flex flex-col sm:flex-row items-start sm:items-center justify-between p-8 sm:p-12 rounded-3xl bg-gradient-to-br from-primary/15 to-transparent border border-primary/25 gap-6">
                     <div>
-                        <h3 class="text-2xl sm:text-3xl font-display font-bold">Let's build something great.</h3>
-                        <p class="text-slate-400 mt-2 text-sm">Open to product collaborations, UX consulting &amp;
+                        <h3 class="text-2xl sm:text-3xl font-display italic font-semibold">Let's build something great.
+                        </h3>
+                        <p class="text-stone-400 mt-2 text-sm">Open to product collaborations, UX consulting &amp;
                             interesting builds.</p>
                     </div>
                     <a href="https://amortree.com/contact"
-                        class="shrink-0 px-7 py-3 bg-primary hover:bg-blue-700 text-white font-bold rounded-xl shadow-xl shadow-primary/30 transition-all transform hover:scale-105 text-sm">
+                        class="shrink-0 px-7 py-3 bg-gradient-to-r from-primary to-primary-bright hover:brightness-110 text-stone-950 font-bold rounded-xl shadow-xl shadow-primary/30 transition-all transform hover:scale-105 text-sm">
                         Connect Now
                     </a>
                 </div>
@@ -591,15 +674,17 @@
                 <!-- Big thanks -->
                 <div class="mt-24 text-center">
                     <h1
-                        class="text-7xl sm:text-[10rem] lg:text-[12rem] font-display font-black leading-none opacity-10 select-none">
-                        THANK YOU</h1>
+                        class="text-7xl sm:text-[10rem] lg:text-[12rem] font-display italic font-black leading-none text-primary/10 select-none">
+                        Thank You</h1>
                 </div>
 
                 <!-- Footer links -->
-                <div class="mt-8 flex flex-wrap justify-between gap-6 sm:gap-12 text-slate-400 footer-links">
-                    <a href="https://amortree.com" target="_blank" class="text-xs font-bold tracking-widest hover:text-primary transition-colors">amortree.com</a>
-                    <span class="text-xs font-bold tracking-widest">© 2024 amortree Tech</span>
-                    <a href="https://invoice.amortree.com" target="_blank" class="text-xs font-bold tracking-widest hover:text-primary transition-colors">invoice.amortree.com</a>
+                <div class="mt-8 flex flex-wrap justify-between gap-6 sm:gap-12 text-stone-400 footer-links">
+                    <a href="https://amortree.com" target="_blank" rel="noopener"
+                        class="text-xs font-bold tracking-widest hover:text-primary transition-colors">amortree.com</a>
+                    <span class="text-xs font-bold tracking-widest" id="copyright-year">© 2024 amortree Tech</span>
+                    <a href="https://invoice.amortree.com" target="_blank" rel="noopener"
+                        class="text-xs font-bold tracking-widest hover:text-primary transition-colors">invoice.amortree.com</a>
                 </div>
             </section>
 
@@ -608,8 +693,8 @@
 
     <!-- Dark mode toggle -->
     <button
-        class="fixed bottom-6 right-6 w-12 h-12 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full shadow-xl flex items-center justify-center z-[60] hover:scale-110 transition-transform"
-        onclick="document.documentElement.classList.toggle('dark')">
+        class="fixed bottom-6 right-6 w-12 h-12 bg-gradient-to-br from-primary to-primary-bright text-stone-950 rounded-full shadow-xl shadow-primary/30 flex items-center justify-center z-[60] hover:scale-110 transition-transform"
+        onclick="document.documentElement.classList.toggle('dark')" aria-label="Toggle dark mode">
         <span class="material-symbols-outlined dark:hidden">dark_mode</span>
         <span class="material-symbols-outlined hidden dark:block">light_mode</span>
     </button>
@@ -618,10 +703,11 @@
         // Skill bars
         const skills = [
             { label: "HTML / CSS", pct: 95 },
-            { label: "JavaScript / ES6+", pct: 90 },
-            { label: "UI/UX Design", pct: 92 },
-            { label: "React / Vue", pct: 82 },
-            { label: "Figma / Prototyping", pct: 88 },
+            { label: "JavaScript / ES6+", pct: 50 },
+            { label: "UI/UX Design", pct: 95 },
+            { label: ".Net / Vue", pct: 60 },
+            { label: "Figma / Prototyping", pct: 90 },
+            { label: "Digital Marketing", pct: 95 },
             { label: "Tailwind CSS", pct: 93 },
         ];
 
@@ -630,22 +716,26 @@
             container.insertAdjacentHTML("beforeend", `
             <div>
                 <div class="flex justify-between text-xs mb-1">
-                    <span class="text-slate-600 dark:text-slate-400 font-medium">${s.label}</span>
-                    <span class="text-slate-400">${s.pct}%</span>
+                    <span class="text-stone-600 dark:text-stone-400 font-medium">${s.label}</span>
+                    <span class="text-stone-400">${s.pct}%</span>
                 </div>
-                <div class="h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
-                    <div class="skill-bar-fill h-full rounded-full bg-primary" style="--target-width:${s.pct}%"></div>
+                <div class="h-1.5 rounded-full bg-stone-200 dark:bg-stone-700 overflow-hidden">
+                    <div class="skill-bar-fill h-full rounded-full" style="--target-width:${s.pct}%"></div>
                 </div>
             </div>
         `);
         });
 
-        // Animate bars on view
+        // Animate bars on view (respects prefers-reduced-motion via CSS)
         const bars = document.querySelectorAll(".skill-bar-fill");
         const obs = new IntersectionObserver(entries => {
             entries.forEach(e => { if (e.isIntersecting) e.target.classList.add("animate"); });
         }, { threshold: 0.3 });
         bars.forEach(b => obs.observe(b));
+
+        // Keep the copyright year current
+        const yearEl = document.getElementById("copyright-year");
+        if (yearEl) yearEl.textContent = `© ${new Date().getFullYear()} amortree Tech`;
     </script>
 </body>
 
