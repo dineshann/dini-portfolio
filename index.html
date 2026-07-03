@@ -256,17 +256,17 @@
 
             <!-- Portrait -->
             <div class="portrait-wrap relative w-full overflow-hidden shrink-0">
-                <img alt="Portrait of Dinesh" class="w-full h-full object-cover object-top transition duration-700"
-                    src="img/dini.png" width="400" height="400"
+                <img alt="Portrait of Dinesh" class="w-full h-[500px] object-cover object-top transition duration-700"
+                    src="img/dinesh.png" width="400" height="400"
                     onerror="this.src='https://ui-avatars.com/api/?name=Dinesh&size=400&background=0b0d10&color=9BB0C2&bold=true&font-size=0.4'" />
                 <div class="absolute inset-0 bg-gradient-to-t from-[#0B0D10] via-[#0B0D10]/25 to-transparent"></div>
                 <div class="absolute inset-0 ring-1 ring-inset ring-primary/20"></div>
-                <div class="seal absolute top-5 right-5" aria-hidden="true"><span>D</span></div>
+                <!-- <div class="seal absolute top-5 left-5" aria-hidden="true"><span>D</span></div> -->
                 <div class="absolute bottom-5 left-6 right-6">
                     <h1 class="font-display italic text-3xl sm:text-4xl text-white font-semibold leading-tight">Dinesh
                     </h1>
-                    <p class="text-primary uppercase text-xs mt-1.5 tracking-[0.15em]">UI/UX Strategist · Front-end
-                        Innovator</p>
+                    <p class="text-primary uppercase text-xs mt-1.5 tracking-[0.15em]">
+                        UI/UX Strategist · Front-end Innovator</p>
                     <p class="font-display text-lg text-primary-bright font-semibold leading-tight mt-3">amortree tech
                     </p>
                     <p class="text-stone-300 uppercase text-[0.65rem] mt-0.5 tracking-[0.15em]">Founder &amp; CEO
@@ -581,8 +581,8 @@
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <div class="flex items-start gap-4">
                                 <div
-                                    class="w-11 h-11 rounded-lg bg-stone-200 dark:bg-stone-800 flex items-center justify-center shrink-0">
-                                    <span class="material-symbols-outlined text-stone-500 text-xl">code</span>
+                                    class="w-11 h-11 rounded-lg bg-stone-900 dark:bg-stone-800 flex items-center justify-center shrink-0 p-1">
+                                    <img src="img/ann-logoIcon.png" alt="Profile Image" class="w-full h-full object-contain rounded-lg" />
                                 </div>
                                 <div>
                                     <h4 class="text-base font-bold dark:text-white leading-tight">Front-end Developer
@@ -605,7 +605,7 @@
                             <div class="flex items-start gap-4">
                                 <div
                                     class="w-11 h-11 rounded-lg bg-stone-200 dark:bg-stone-800 flex items-center justify-center shrink-0">
-                                    <span class="material-symbols-outlined text-stone-500 text-xl">brush</span>
+                                    <img src="img/cg-logoicon.jpg" alt="Profile Image" class="w-full h-full object-contain rounded-lg" />
                                 </div>
                                 <div>
                                     <h4 class="text-base font-bold dark:text-white leading-tight">Web Designer</h4>
@@ -801,13 +801,14 @@
     <script>
         // Skill bars
         const skills = [
-            { label: "HTML / CSS", pct: 95 },
-            { label: "JavaScript / ES6+", pct: 50 },
-            { label: "UI/UX Design", pct: 95 },
-            { label: ".Net / Vue", pct: 60 },
+            { label: "UI/UX Design", pct: 96 },
             { label: "Figma / Prototyping", pct: 90 },
-            { label: "Digital Marketing", pct: 95 },
+            { label: "HTML / CSS", pct: 95 },
             { label: "Tailwind CSS", pct: 93 },
+            { label: "JavaScript / ES6+", pct: 65 },
+            { label: ".Net / Vue", pct: 60 },
+            { label: "Digital Marketing", pct: 95 },
+            { label: "Lead Generation", pct: 90 },
         ];
 
         const container = document.getElementById("skill-bars");
