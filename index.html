@@ -5,6 +5,28 @@
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Dinesh | UI/UX Strategist & Front-end Innovator</title>
+    <meta name="description"
+        content="Dinesh — UI/UX Strategist & Front-end Innovator. Founder & CEO of Amortree Tech. 10+ years building performant, accessible web interfaces, design systems, and product experiences." />
+    <link rel="canonical" href="https://amortree.com" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="profile" />
+    <meta property="og:title" content="Dinesh | UI/UX Strategist & Front-end Innovator" />
+    <meta property="og:description"
+        content="Founder & CEO of Amortree Tech. 10+ years building performant, accessible web interfaces, design systems, and product experiences." />
+    <meta property="og:url" content="https://amortree.com" />
+    <meta property="og:site_name" content="Amortree Tech" />
+    <meta property="og:image" content="https://demo.amortree.com/assets/img/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Dinesh | UI/UX Strategist & Front-end Innovator" />
+    <meta name="twitter:description"
+        content="Founder & CEO of Amortree Tech. 10+ years building performant, accessible web interfaces, design systems, and product experiences." />
+    <meta name="twitter:image" content="https://demo.amortree.com/assets/img/og-image.png" />
+
     <link rel="shortcut icon" href="https://amortree.com/assets/favicon-DWfsGvND.png" type="image/x-icon">
     <link href="https://fonts.googleapis.com" rel="preconnect" />
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
@@ -61,17 +83,36 @@
             }
         }
 
-        /* ── Sidebar fixed on desktop, stacked on mobile ── */
+        /* ── Sidebar: sticky + full viewport height on desktop. Content fills
+           the 100vh panel; if it ever runs longer than the viewport, the
+           inner region scrolls on its own but WITHOUT a visible scrollbar,
+           so nothing gets clipped and there's no scroll UI to look at. ── */
+        @media (min-width: 1024px) {
+            .sidebar {
+                position: sticky;
+                top: 0;
+                height: 100vh;
+                align-self: flex-start;
+            }
+        }
+
+        .no-scrollbar {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* ── Sidebar stacked on mobile ── */
         @media (max-width: 1023px) {
             .sidebar {
                 position: relative !important;
                 width: 100% !important;
+                height: auto !important;
                 border-right: none !important;
                 border-bottom: 1px solid rgba(155, 176, 194, 0.25);
-            }
-
-            .main-content {
-                margin-left: 0 !important;
             }
         }
 
@@ -185,6 +226,16 @@
             }
         }
 
+        /* ── Sticky nav: active section pill ── */
+        .nav-link {
+            position: relative;
+        }
+
+        .nav-link.active {
+            background: linear-gradient(135deg, #9BB0C2, #EDF2F5) !important;
+            color: #0B0D10 !important;
+        }
+
         /* ── Mobile nav spacing fix ── */
         @media (max-width: 640px) {
             .footer-links {
@@ -201,12 +252,12 @@
 
         <!-- ═══ SIDEBAR ═══ -->
         <aside
-            class="sidebar lg:w-80 xl:w-96 lg:fixed lg:inset-y-0 lg:left-0 z-50 bg-white dark:bg-stone-900 border-r border-stone-200 dark:border-stone-800 overflow-y-auto">
+            class="sidebar lg:w-80 xl:w-96 z-50 bg-white dark:bg-stone-900 border-r border-stone-200 dark:border-stone-800 flex flex-col">
 
             <!-- Portrait -->
-            <div class="portrait-wrap relative w-full overflow-hidden">
+            <div class="portrait-wrap relative w-full overflow-hidden shrink-0">
                 <img alt="Portrait of Dinesh" class="w-full h-full object-cover object-top transition duration-700"
-                    src="img/dini.png"
+                    src="img/dini.png" width="400" height="400"
                     onerror="this.src='https://ui-avatars.com/api/?name=Dinesh&size=400&background=0b0d10&color=9BB0C2&bold=true&font-size=0.4'" />
                 <div class="absolute inset-0 bg-gradient-to-t from-[#0B0D10] via-[#0B0D10]/25 to-transparent"></div>
                 <div class="absolute inset-0 ring-1 ring-inset ring-primary/20"></div>
@@ -223,8 +274,10 @@
                 </div>
             </div>
 
-            <!-- Sidebar body -->
-            <div class="p-6 space-y-7">
+            <!-- Sidebar body: fills the remaining space in the 100vh panel. No visible
+                 scrollbar (see .no-scrollbar) — on the rare short viewport where content
+                 would otherwise overflow, it scrolls invisibly rather than clipping. -->
+            <div class="p-6 space-y-7 lg:flex-1 lg:min-h-0 lg:overflow-y-auto no-scrollbar lg:flex lg:flex-col">
 
                 <!-- Social + CTA -->
                 <div class="flex flex-wrap items-center gap-3">
@@ -294,22 +347,52 @@
                     </div>
                 </div>
 
-                <!-- Skills -->
-                <div>
-                    <h3 class="text-xs font-bold uppercase tracking-[0.2em] text-primary/80 mb-4">Skills</h3>
-                    <div class="space-y-3" id="skill-bars">
-                        <!-- bars injected by JS -->
-                    </div>
-                </div>
+            </div>
 
+            <!-- Status footer: anchored to the bottom of the 100vh panel, filling any
+                 remaining space with useful info rather than blank space. -->
+            <div class="lg:mt-auto shrink-0 p-6 pt-5 border-t border-stone-200 dark:border-stone-800">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="relative flex h-2.5 w-2.5">
+                        <span
+                            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                    </span>
+                    <span class="text-sm font-semibold text-stone-700 dark:text-stone-200">Available for new
+                        projects</span>
+                </div>
+                <div class="flex items-center gap-2 text-xs text-stone-500 dark:text-stone-400">
+                    <span class="material-symbols-outlined text-sm">location_on</span>
+                    <span>Bengaluru, India</span>
+                    <span class="text-stone-300 dark:text-stone-700">·</span>
+                    <span id="local-time">--:--</span>
+                </div>
             </div>
         </aside>
 
         <!-- ═══ MAIN ═══ -->
-        <main class="main-content lg:ml-80 xl:ml-96 flex-1">
+        <main class="main-content flex-1 min-w-0">
+
+            <!-- ── In-page nav ── -->
+            <nav
+                class="sticky top-0 z-40 flex items-center gap-1 sm:gap-2 overflow-x-auto px-6 lg:px-12 xl:px-20 py-3 bg-background-light/85 dark:bg-background-dark/85 backdrop-blur border-b border-stone-200 dark:border-stone-800 text-sm"
+                aria-label="Section navigation">
+                <a href="#impact"
+                    class="nav-link shrink-0 px-3 py-1.5 rounded-full font-medium text-stone-600 dark:text-stone-300 hover:text-stone-950 dark:hover:text-white hover:bg-stone-200/60 dark:hover:bg-stone-800 transition-colors">Impact</a>
+                <a href="#work"
+                    class="nav-link shrink-0 px-3 py-1.5 rounded-full font-medium text-stone-600 dark:text-stone-300 hover:text-stone-950 dark:hover:text-white hover:bg-stone-200/60 dark:hover:bg-stone-800 transition-colors">Work</a>
+                <a href="#skills"
+                    class="nav-link shrink-0 px-3 py-1.5 rounded-full font-medium text-stone-600 dark:text-stone-300 hover:text-stone-950 dark:hover:text-white hover:bg-stone-200/60 dark:hover:bg-stone-800 transition-colors">Skills</a>
+                <a href="#career"
+                    class="nav-link shrink-0 px-3 py-1.5 rounded-full font-medium text-stone-600 dark:text-stone-300 hover:text-stone-950 dark:hover:text-white hover:bg-stone-200/60 dark:hover:bg-stone-800 transition-colors">Career</a>
+                <a href="#competencies"
+                    class="nav-link shrink-0 px-3 py-1.5 rounded-full font-medium text-stone-600 dark:text-stone-300 hover:text-stone-950 dark:hover:text-white hover:bg-stone-200/60 dark:hover:bg-stone-800 transition-colors">Expertise</a>
+                <a href="#future"
+                    class="nav-link shrink-0 px-3 py-1.5 rounded-full font-medium text-stone-600 dark:text-stone-300 hover:text-stone-950 dark:hover:text-white hover:bg-stone-200/60 dark:hover:bg-stone-800 transition-colors">Contact</a>
+            </nav>
 
             <!-- ── Global Impact ── -->
-            <section class="p-6 lg:p-12 lg:pt-20 xl:px-20 xl:pt-20 xl:pb-6 mb-6" id="impact">
+            <section class="p-6 lg:p-12 lg:pt-20 xl:px-20 xl:pt-20 xl:pb-6 mb-6 scroll-mt-20" id="impact">
                 <h2 class="text-3xl lg:text-5xl font-display font-bold mb-10 flex items-center gap-4">
                     <span class="w-12 h-1 bg-primary rounded-full"></span>
                     Impact &amp; Craft
@@ -332,7 +415,7 @@
                         class="lift-card p-7 rounded-2xl bg-white dark:bg-stone-800 border border-stone-100 dark:border-stone-700">
                         <div
                             class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-5">
-                            <img src="https://amortree.com/assets/favicon-DWfsGvND.png" alt="Profile Image" class="w-full h-full object-cover rounded-lg" />
+                            <img src="https://amortree.com/assets/favicon-DWfsGvND.png" alt="Profile Image" width="48" height="48" class="w-full h-full object-cover rounded-lg" />
                         </div>
                         <h3 class="text-xl font-bold mb-3">Amortree Tech Founded</h3>
                         <p class="text-stone-500 dark:text-stone-400 leading-relaxed text-sm">
@@ -369,7 +452,7 @@
             </section>
 
             <!-- ── Strategic Initiatives ── -->
-            <section class="p-6 lg:p-12 xl:px-20 xl:py-6 mb-6">
+            <section class="p-6 lg:p-12 xl:px-20 xl:py-6 mb-6 scroll-mt-20" id="work">
                 <div class="divider-title">
                     <span class="line"></span>
                     <h2 class="font-display text-2xl sm:text-4xl dark:text-white whitespace-nowrap">Featured Work</h2>
@@ -382,7 +465,7 @@
                         class="lift-card group relative bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl overflow-hidden">
                         <div
                             class="h-44 overflow-hidden bg-gradient-to-br from-[#1C2733] via-[#0F151C] to-stone-950 flex items-center justify-center">
-                            <img src="https://demo.amortree.com/assets/img/og-image.png" alt="Amortree Tech website preview" class="w-full h-full object-cover">
+                            <img src="https://demo.amortree.com/assets/img/og-image.png" alt="Amortree Tech website preview" width="1200" height="630" class="w-full h-full object-cover">
                         </div>
                         <div class="p-5">
                             <p class="text-primary text-xs font-bold uppercase tracking-wider mb-1">Product Studio</p>
@@ -445,8 +528,24 @@
                 </div>
             </section>
 
+            <!-- ── Technical Skills ── -->
+            <section class="p-6 lg:p-12 xl:px-20 xl:py-6 mb-6 scroll-mt-20" id="skills">
+                <div class="divider-title">
+                    <span class="line"></span>
+                    <h2 class="font-display text-2xl sm:text-4xl dark:text-white whitespace-nowrap">Technical Skills
+                    </h2>
+                    <span class="line"></span>
+                </div>
+                <div
+                    class="lift-card p-6 sm:p-10 rounded-2xl bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 max-w-4xl mx-auto">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-7" id="skill-bars">
+                        <!-- bars injected by JS -->
+                    </div>
+                </div>
+            </section>
+
             <!-- ── Career Trajectory ── -->
-            <section class="p-6 lg:p-12 xl:px-20 xl:py-6 mb-6">
+            <section class="p-6 lg:p-12 xl:px-20 xl:py-6 mb-6 scroll-mt-20" id="career">
                 <div class="divider-title">
                     <span class="line"></span>
                     <h2 class="font-display text-2xl sm:text-4xl dark:text-white whitespace-nowrap">Career Trajectory
@@ -461,7 +560,7 @@
                             <div class="flex items-start gap-4">
                                 <div
                                     class="w-11 h-11 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                                    <img src="https://amortree.com/assets/favicon-DWfsGvND.png" alt="Profile Image" class="w-full h-full object-cover rounded-lg" />
+                                    <img src="https://amortree.com/assets/favicon-DWfsGvND.png" alt="Profile Image" width="48" height="48" class="w-full h-full object-cover rounded-lg" />
                                 </div>
                                 <div>
                                     <h4 class="text-base font-bold dark:text-white leading-tight">Founder &amp; CEO</h4>
@@ -527,7 +626,7 @@
             </section>
 
             <!-- ── Core Competencies ── -->
-            <section class="p-6 lg:p-12 xl:px-20 xl:py-6 mb-6">
+            <section class="p-6 lg:p-12 xl:px-20 xl:py-6 mb-6 scroll-mt-20" id="competencies">
                 <div class="divider-title">
                     <span class="line"></span>
                     <h2 class="font-display text-2xl sm:text-4xl dark:text-white whitespace-nowrap">Core Competencies
@@ -627,7 +726,7 @@
             </footer>
 
             <!-- ── Future Vision (dark) ── -->
-            <section class="p-8 lg:p-16 xl:p-20 bg-stone-900 text-white dark:bg-stone-950" id="future">
+            <section class="p-8 lg:p-16 xl:p-20 bg-stone-900 text-white dark:bg-stone-950 scroll-mt-20" id="future">
                 <h2 class="text-3xl lg:text-5xl font-display font-bold mb-10 flex items-center gap-4">
                     <span class="w-12 h-1 bg-primary rounded-full"></span>
                     What I'm Building Next
@@ -715,11 +814,11 @@
         skills.forEach(s => {
             container.insertAdjacentHTML("beforeend", `
             <div>
-                <div class="flex justify-between text-xs mb-1">
-                    <span class="text-stone-600 dark:text-stone-400 font-medium">${s.label}</span>
-                    <span class="text-stone-400">${s.pct}%</span>
+                <div class="flex justify-between text-sm mb-2">
+                    <span class="text-stone-700 dark:text-stone-300 font-semibold">${s.label}</span>
+                    <span class="text-primary font-medium">${s.pct}%</span>
                 </div>
-                <div class="h-1.5 rounded-full bg-stone-200 dark:bg-stone-700 overflow-hidden">
+                <div class="h-2 rounded-full bg-stone-200 dark:bg-stone-700 overflow-hidden">
                     <div class="skill-bar-fill h-full rounded-full" style="--target-width:${s.pct}%"></div>
                 </div>
             </div>
@@ -733,9 +832,46 @@
         }, { threshold: 0.3 });
         bars.forEach(b => obs.observe(b));
 
+        // Sticky nav: highlight the active section pill on scroll
+        const navLinks = document.querySelectorAll(".nav-link");
+        const navSectionIds = ["impact", "work", "skills", "career", "competencies", "future"];
+        const navSections = navSectionIds
+            .map(id => document.getElementById(id))
+            .filter(Boolean);
+
+        function setActiveNavLink(id) {
+            navLinks.forEach(link => {
+                link.classList.toggle("active", link.getAttribute("href") === `#${id}`);
+            });
+        }
+
+        if (navSections.length) {
+            const navObserver = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) setActiveNavLink(entry.target.id);
+                });
+            }, { rootMargin: "-45% 0px -50% 0px", threshold: 0 });
+            navSections.forEach(section => navObserver.observe(section));
+            setActiveNavLink(navSectionIds[0]);
+        }
         // Keep the copyright year current
         const yearEl = document.getElementById("copyright-year");
         if (yearEl) yearEl.textContent = `© ${new Date().getFullYear()} amortree Tech`;
+
+        // Live local time for the sidebar status footer (Bengaluru, India)
+        const timeEl = document.getElementById("local-time");
+        function updateLocalTime() {
+            if (!timeEl) return;
+            const formatted = new Intl.DateTimeFormat("en-IN", {
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
+                timeZone: "Asia/Kolkata",
+            }).format(new Date());
+            timeEl.textContent = `${formatted} IST`;
+        }
+        updateLocalTime();
+        setInterval(updateLocalTime, 30000);
     </script>
 </body>
 
