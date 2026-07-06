@@ -684,13 +684,5 @@ ASALocalRun/
 .localhistory/
 
 # BeatPulse healthcheck temp database
-AdoptFarmers_v1/AdoptFarmers.Web/AdoptFarmers.Web.csproj
-AdoptFarmers_v1/AdoptFarmers.Web/log.txt
-AdoptFarmers_v1/AdoptFarmers.Web/log.txt
-src/Edu2.Web/log.txt
-Edu2LMSApp/.DS_Store
-Edu2Website/.DS_Store
-Edu2Website/Edu2.Web/wwwroot/.DS_Store
-Edu2Website/Edu2.Web/wwwroot/theme_1/assets/.DS_Store
-Edu2Website/Edu2.Web/wwwroot/theme_1/.DS_Store
 .DS_Store
+.vscode/settings.json
