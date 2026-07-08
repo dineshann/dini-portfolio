@@ -1,44 +1,65 @@
-# Dinesh — Portfolio Site
+# amortree-landingpage
 
-A single-page, dark/light-mode portfolio built with Tailwind CSS (CDN), vanilla JS, and Google Fonts. No build step required — just open `index.html` in a browser.
+Dinesh's personal portfolio site — a single-page, self-contained resume/landing page built with Tailwind CSS. Presents a decade of UI/UX and front-end work in an editorial, platinum-on-charcoal "premium" visual style, with a light mode alternative.
+
+**Live structure:** fixed sidebar (portrait, vision, skills, contact) + scrolling main content (impact highlights, featured work, career timeline, core competencies, and a closing call-to-action).
+
+## Tech
+
+- Static HTML, no build step or dependencies to install
+- [Tailwind CSS](https://tailwindcss.com) via the CDN script (JIT, `forms` + `typography` plugins)
+- Google Fonts: **Fraunces** (display/serif) + **Inter** (body/sans)
+- Google **Material Symbols Outlined** for iconography
+- Vanilla JS for the skill bars, scroll-triggered animation, dark mode toggle, and dynamic copyright year
 
 ## Structure
 
 ```
-index.html   → entire site (markup, styles, and script in one file)
-img/dini.png → portrait photo (falls back to a generated avatar if missing)
+dini-portfolio/
+├── index.html      # entire site — markup, Tailwind config, styles, and JS all live here
+├── img/
+│   └── dini.png     # portrait used in the sidebar
+└── README.md
 ```
 
-## Layout
+## Design system
 
-- **Sidebar** (`<aside>`) — portrait, name/title, social links, "Hire Me" CTA, Core Focus tags, Vision quote, Connect icons, animated Skills bars.
-  - Desktop (`lg` and up): `position: sticky; top: 0`. It sticks to the top of the viewport while shorter than it, then scrolls with the page once its content runs past the fold — no independent scrollbar.
-  - Mobile: stacks above the main content as a normal block.
-- **Main** (`<main>`) — Impact & Craft, Featured Work, Career Trajectory, Core Competencies, and a dark "What I'm Building Next" closing section with a contact CTA.
+| Token | Value | Used for |
+|---|---|---|
+| `primary` | `#9BB0C2` (brushed platinum) | accents, links, buttons, icons |
+| `primary-bright` | `#EDF2F5` (icy silver) | gradient highlights |
+| `sapphire` | `#16324F` | secondary jewel-tone accent (Featured Work) |
+| `background-dark` | `#0B0D10` | dark mode base |
+| `background-light` | `#F5F4F1` | light mode base |
+| Display type | Fraunces (italic for editorial emphasis) | headings, pull quotes |
+| Body type | Inter | paragraphs, labels, UI text |
 
-## Tech
+Dark mode is the default (toggle bottom-right, persists only for the session — no `localStorage`, so it resets on reload). A subtle dot-grain texture, platinum hairline dividers, and a monogram "seal" badge on the portrait are the signature premium touches.
 
-| Piece | Source |
-|---|---|
-| Styling | Tailwind CSS via CDN (`forms`, `typography` plugins) + a small custom `<style>` block for grain texture, skill bars, hover lifts, and the sticky sidebar |
-| Fonts | Inter (body) + Fraunces (display/italic) + Material Symbols Outlined (icons) via Google Fonts |
-| Dark mode | Tailwind `class` strategy, toggled by the floating button (bottom-right); defaults to dark on load (`<html class="dark">`) |
-| Skill bars | Rendered from a JS array (`skills`) and animated via `IntersectionObserver` when scrolled into view |
-| Motion | Respects `prefers-reduced-motion` (disables transitions/animations) |
+## Running locally
 
-## Customizing
+No build tools needed — open `index.html` directly in a browser, or serve it:
 
-- **Portrait**: replace `img/dini.png`. If missing, an initials avatar is auto-generated.
-- **Skills**: edit the `skills` array near the bottom of `index.html` — `{ label, pct }` pairs.
-- **Color palette**: edit the `tailwind.config` block in `<head>` (`primary`, `primary-bright`, `sapphire`, `background-light`, `background-dark`).
-- **Copy/links**: all content (bio, career history, featured work, contact links) is inline HTML in the relevant `<section>` — no CMS or data file.
-- **Copyright year**: auto-updates via JS on page load.
+```bash
+python3 -m http.server 8000
+# then visit http://localhost:8000
+```
 
-## Browser support
+## Editing content
 
-Modern evergreen browsers. Uses `IntersectionObserver`, CSS `sticky`, and CSS custom properties (`--target-width`) — no polyfills included.
+- **Skills / proficiency bars:** edit the `skills` array near the bottom of `index.html` (`{ label, pct }` pairs) — bars render and animate automatically.
+- **Career timeline / featured work / competencies:** each is a repeated card block in the corresponding `<section>` — copy an existing card and edit the text/icon.
+- **Portrait:** replace `img/dini.png` (same filename) or update the `src` path. An avatar fallback (`ui-avatars.com`) is wired up via `onerror` in case the image fails to load.
+- **Contact links:** update the `mailto:`, `tel:`, and social `href`s in the sidebar's Connect / Social block.
+
+## Accessibility notes
+
+- All icon-only links have `aria-label`s in addition to `title`s.
+- Visible platinum focus rings on all interactive elements (`:focus-visible`).
+- Animations and transitions are disabled for users with `prefers-reduced-motion: reduce`.
+- External links open with `rel="noopener"`.
 
 ## Known limitations
 
-- Tailwind is loaded via CDN (`cdn.tailwindcss.com`), which is fine for a static personal site but not recommended for production apps needing PurgeCSS/tree-shaking — consider a proper Tailwind build step if this grows beyond a single page.
-- No routing/framework — it's intentionally a single static HTML file.
+- Tailwind is compiled client-side via CDN script — there's no purge/build step, so first paint depends on the CDN and Google Fonts loading (no offline fallback).
+- Dark/light preference isn't persisted between visits by design (kept intentionally simple, no storage).
