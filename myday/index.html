@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#050505">
+    <meta name="theme-color" content="#050505" id="metaThemeColor">
     <link rel="apple-touch-icon"
         href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Crect width='180' height='180' fill='%23050505'/%3E%3Ctext x='50%25' y='60%25' font-size='90' font-family='Georgia' fill='%23f5f5f3' text-anchor='middle'%3ED%3C/text%3E%3C/svg%3E">
     <title>Amortree Flow</title>
@@ -26,6 +26,51 @@
             --ink: #f5f5f3;
             --ink-dim: rgba(245, 245, 243, 0.55);
             --ink-dimmer: rgba(245, 245, 243, 0.32);
+            --blob-color: rgba(255, 255, 255, 0.14);
+            --ink-rgb: 245, 245, 243;
+        }
+
+        /* Light theme — same variables, everything built on them (cards,
+           borders, text, the blob background gradients) repaints
+           automatically. Toggled via data-theme="light" on <html>. */
+        [data-theme="light"] {
+            --bg: #f5f4f0;
+            --glass-bg: rgba(5, 5, 5, 0.045);
+            --glass-bg-strong: rgba(5, 5, 5, 0.075);
+            --glass-border: rgba(5, 5, 5, 0.12);
+            --ink: #16130f;
+            --ink-dim: rgba(22, 19, 15, 0.6);
+            --ink-dimmer: rgba(22, 19, 15, 0.38);
+            --blob-color: rgba(5, 5, 5, 0.05);
+            --ink-rgb: 22, 19, 15;
+        }
+
+        /* These Tailwind utility classes (input underlines, placeholders,
+           progress-bar tracks) are used ~35 times across every form/modal
+           in the app with hardcoded white-based opacity — overriding the
+           classes themselves here covers all of them at once, current and
+           future, rather than editing every individual occurrence. */
+        [data-theme="light"] .border-white\/15,
+        [data-theme="light"] .focus\:border-white\/50:focus,
+        [data-theme="light"] .border-white\/20 {
+            border-color: rgba(var(--ink-rgb), 0.2) !important;
+        }
+
+        [data-theme="light"] .bg-white\/10 {
+            background-color: rgba(var(--ink-rgb), 0.1) !important;
+        }
+
+        [data-theme="light"] .text-white\/50 {
+            color: rgba(var(--ink-rgb), 0.5) !important;
+        }
+
+        [data-theme="light"] .placeholder\:text-white\/25::placeholder {
+            color: rgba(var(--ink-rgb), 0.35) !important;
+        }
+
+        [data-theme="light"] input,
+        [data-theme="light"] textarea {
+            color: var(--ink);
         }
 
         * {
@@ -105,7 +150,7 @@
             position: absolute;
             border-radius: 9999px;
             filter: blur(60px);
-            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0) 70%);
+            background: radial-gradient(circle at 30% 30%, var(--blob-color), rgba(var(--ink-rgb), 0) 70%);
         }
 
         .glass {
@@ -141,7 +186,7 @@
             width: 22px;
             height: 22px;
             border-radius: 9999px;
-            border: 1.5px solid rgba(245, 245, 243, 0.35);
+            border: 1.5px solid rgba(var(--ink-rgb), 0.35);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -155,12 +200,12 @@
         }
 
         .checkbox-ring.done svg {
-            stroke: #050505;
+            stroke: var(--bg);
         }
 
         .task-card.now {
-            border-color: rgba(255, 255, 255, 0.4);
-            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15), 0 8px 30px rgba(255, 255, 255, 0.06);
+            border-color: rgba(var(--ink-rgb), 0.4);
+            box-shadow: 0 0 0 1px rgba(var(--ink-rgb), 0.15), 0 8px 30px rgba(var(--ink-rgb), 0.06);
         }
 
         .now-badge {
@@ -168,8 +213,8 @@
             letter-spacing: 0.12em;
             padding: 2px 7px;
             border-radius: 9999px;
-            background: #f5f5f3;
-            color: #050505;
+            background: var(--ink);
+            color: var(--bg);
             font-weight: 600;
         }
 
@@ -177,7 +222,7 @@
             width: 6px;
             height: 6px;
             border-radius: 9999px;
-            background: #f5f5f3;
+            background: var(--ink);
             animation: pulse 1.6s ease-in-out infinite;
         }
 
@@ -209,7 +254,7 @@
         .week-bar {
             width: 100%;
             border-radius: 6px 6px 3px 3px;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(var(--ink-rgb), 0.1);
             position: relative;
             overflow: hidden;
         }
@@ -219,7 +264,7 @@
             bottom: 0;
             left: 0;
             right: 0;
-            background: #f5f5f3;
+            background: var(--ink);
             border-radius: 6px 6px 3px 3px;
         }
 
@@ -231,16 +276,70 @@
             box-shadow: 0 0 0 2px var(--bg);
         }
 
-        .status-option {
+        .status-option,
+        .theme-option {
             transition: all .2s ease;
             border-color: var(--glass-border);
             color: var(--ink-dim);
         }
 
-        .status-option.active {
-            background: #f5f5f3;
-            color: #050505;
-            border-color: #f5f5f3;
+        .status-option.active,
+        .theme-option.active {
+            background: var(--ink);
+            color: var(--bg);
+            border-color: var(--ink);
+        }
+
+        /* ---- Profile hero photo: large, tappable, tilts toward the
+           cursor on desktop with a glossy shine that tracks the pointer.
+           Touch devices just get the static photo (see JS pointerType
+           guard) — a fake tilt driven by taps would feel broken, not fun. ---- */
+        .profile-photo-tilt {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            max-height: 420px;
+            perspective: 900px;
+            cursor: pointer;
+        }
+
+        .profile-photo-btn {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--glass-bg-strong);
+            transform-style: preserve-3d;
+            will-change: transform;
+            border: none;
+            padding: 0;
+        }
+
+        .profile-photo-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* Deliberately NOT theme-aware — a glossy highlight is a light
+           reflection, a physical-material effect, not a UI color choice,
+           so it stays a soft white sweep in both themes. */
+        .profile-photo-shine {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            pointer-events: none;
+            opacity: 0;
+            background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(255, 255, 255, 0.38), transparent 45%);
+            transition: opacity .25s ease;
+        }
+
+        .profile-photo-tilt.shine-active .profile-photo-shine {
+            opacity: 1;
         }
 
         .status-pill {
@@ -258,19 +357,19 @@
         }
 
         .status-pill.is-done {
-            background: #f5f5f3;
-            color: #050505;
-            border-color: #f5f5f3;
+            background: var(--ink);
+            color: var(--bg);
+            border-color: var(--ink);
         }
 
         .status-pill.is-overdue {
-            border-color: rgba(255, 255, 255, 0.45);
+            border-color: rgba(var(--ink-rgb), 0.45);
             color: var(--ink);
         }
 
         .reflection-choice.active {
             background: var(--glass-bg-strong);
-            border-color: rgba(255, 255, 255, 0.4);
+            border-color: rgba(var(--ink-rgb), 0.4);
         }
 
         .override-task-row {
@@ -288,7 +387,7 @@
 
         .override-task-row.active {
             background: var(--glass-bg-strong);
-            border-color: rgba(255, 255, 255, 0.4);
+            border-color: rgba(var(--ink-rgb), 0.4);
         }
 
         .override-task-label {
@@ -322,14 +421,26 @@
             display: none;
         }
 
+        .client-tasks-grid {
+            display: block;
+        }
+
+        .profile-grid {
+            display: block;
+        }
+
+        .profile-card {
+            margin-bottom: 24px;
+        }
+
         @media (min-width: 900px) {
             .app-shell {
-                max-width: 1440px;
+                max-width: 1280px;
                 padding-left: 32px;
                 padding-right: 32px;
             }
 
-            #view-timetable {
+            #view-timetable:not(.hidden) {
                 display: grid;
                 grid-template-columns: minmax(280px, 30%) 1fr;
                 align-items: start;
@@ -338,6 +449,28 @@
 
             .desktop-cal-panel {
                 display: block;
+            }
+
+            .client-tasks-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                gap: 14px;
+                align-items: start;
+            }
+
+            .client-tasks-grid>div {
+                margin-bottom: 0;
+            }
+
+            .profile-grid {
+                display: grid;
+                grid-template-columns: 300px 1fr;
+                gap: 28px;
+                align-items: start;
+            }
+
+            .profile-card {
+                margin-bottom: 0;
             }
         }
 
@@ -367,7 +500,7 @@
             cursor: pointer;
             transition: all .15s ease;
             position: relative;
-            background: rgba(255, 255, 255, 0.02);
+            background: rgba(var(--ink-rgb), 0.02);
         }
 
         .cal-day:hover {
@@ -375,12 +508,12 @@
         }
 
         .cal-day.is-today {
-            border-color: rgba(255, 255, 255, 0.45);
+            border-color: rgba(var(--ink-rgb), 0.45);
         }
 
         .cal-day.is-selected {
             background: var(--glass-bg-strong);
-            border-color: #f5f5f3;
+            border-color: var(--ink);
         }
 
         .cal-day.is-empty {
@@ -399,13 +532,13 @@
             width: 60%;
             height: 3px;
             border-radius: 2px;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(var(--ink-rgb), 0.1);
             overflow: hidden;
         }
 
         .cal-day-bar-fill {
             height: 100%;
-            background: #f5f5f3;
+            background: var(--ink);
         }
 
         .cal-day-dot {
@@ -415,7 +548,7 @@
             width: 5px;
             height: 5px;
             border-radius: 9999px;
-            background: #f5f5f3;
+            background: var(--ink);
             opacity: 0.7;
         }
 
@@ -429,7 +562,7 @@
         }
 
         .history-card:hover {
-            background: rgba(255, 255, 255, 0.03);
+            background: rgba(var(--ink-rgb), 0.03);
         }
 
         .history-card-icon {
@@ -538,7 +671,7 @@
         }
 
         .report-daynum.is-today {
-            color: #f5f5f3;
+            color: var(--ink);
             font-weight: 600;
         }
 
@@ -554,7 +687,7 @@
         }
 
         .report-check {
-            color: #f5f5f3;
+            color: var(--ink);
             font-weight: 700;
             font-size: 12px;
         }
@@ -608,7 +741,7 @@
             </div>
             <p id="onboardingError" class="hidden text-[11px] mb-3" style="color:var(--ink-dim)"></p>
             <button id="onboardingTestBtn"
-                class="w-full bg-[#f5f5f3] text-black font-display font-semibold rounded-2xl py-3.5 text-sm active:scale-[0.98] transition-transform mb-3">Test
+                class="w-full bg-[var(--ink)] text-[var(--bg)] font-display font-semibold rounded-2xl py-3.5 text-sm active:scale-[0.98] transition-transform mb-3">Test
                 connection & continue</button>
             <button id="onboardingSkipBtn" class="w-full glass rounded-2xl py-3 text-xs font-mono mb-2">Skip — use
                 this device only (no sync)</button>
@@ -629,7 +762,7 @@
             </div>
             <button id="settingsBtn"
                 class="glass rounded-full w-11 h-11 flex items-center justify-center active:scale-90 transition-transform relative">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#f5f5f3" stroke-width="1.6">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
                     <circle cx="12" cy="12" r="3" />
                     <path
                         d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
@@ -655,15 +788,15 @@
             <div id="view-clients" class="hidden"></div>
             <div id="view-profile" class="hidden"></div>
         </main>
-    </div>
 
-    <button id="fabAdd"
-        class="hidden fixed bottom-8 right-1/2 translate-x-[calc(50%+120px)] z-20 glass-strong rounded-full w-16 h-16 items-center justify-center shadow-2xl active:scale-90 transition-transform">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f5f5f3" stroke-width="2"
-            stroke-linecap="round">
-            <path d="M12 5v14M5 12h14" />
-        </svg>
-    </button>
+        <button id="fabAdd"
+            class="hidden absolute bottom-8 right-4 z-20 glass-strong rounded-full w-16 h-16 items-center justify-center shadow-2xl active:scale-90 transition-transform">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round">
+                <path d="M12 5v14M5 12h14" />
+            </svg>
+        </button>
+    </div>
 
     <!-- Toast (undo) -->
     <div id="toastWrap" class="hidden fixed bottom-8 left-1/2 -translate-x-1/2 z-40">
@@ -685,7 +818,7 @@
                 </div>
                 <button id="modalClose"
                     class="w-8 h-8 rounded-full flex items-center justify-center glass shrink-0"><svg width="14"
-                        height="14" viewBox="0 0 24 24" fill="none" stroke="#f5f5f3" stroke-width="2">
+                        height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M18 6L6 18M6 6l12 12" />
                     </svg></button>
             </div>
@@ -732,7 +865,7 @@
                 </div>
             </div>
             <button id="saveTaskBtn"
-                class="w-full mt-6 bg-[#f5f5f3] text-black font-display font-semibold rounded-2xl py-3.5 text-sm active:scale-[0.98] transition-transform">Save
+                class="w-full mt-6 bg-[var(--ink)] text-[var(--bg)] font-display font-semibold rounded-2xl py-3.5 text-sm active:scale-[0.98] transition-transform">Save
                 task</button>
             <p id="modalError" class="hidden text-[11px] text-white/50 mt-2 text-center"></p>
         </div>
@@ -745,7 +878,7 @@
             <div class="flex items-center justify-between mb-1">
                 <h2 class="font-display text-lg font-semibold">Quick reflection</h2>
                 <button id="reflectionClose" class="w-8 h-8 rounded-full flex items-center justify-center glass"><svg
-                        width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f5f5f3" stroke-width="2">
+                        width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M18 6L6 18M6 6l12 12" />
                     </svg></button>
             </div>
@@ -770,7 +903,7 @@
                     <p id="checkinBlockTitle" class="text-xs mt-0.5" style="color:var(--ink-dimmer)">—</p>
                 </div>
                 <button id="checkinClose" class="w-8 h-8 rounded-full flex items-center justify-center glass shrink-0"><svg
-                        width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f5f5f3" stroke-width="2">
+                        width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M18 6L6 18M6 6l12 12" />
                     </svg></button>
             </div>
@@ -789,9 +922,18 @@
             <div class="flex items-center justify-between mb-4">
                 <h2 class="font-display text-lg font-semibold">Settings</h2>
                 <button id="settingsClose" class="w-8 h-8 rounded-full flex items-center justify-center glass"><svg
-                        width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f5f5f3" stroke-width="2">
+                        width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M18 6L6 18M6 6l12 12" />
                     </svg></button>
+            </div>
+
+            <p class="text-[11px] uppercase tracking-wider font-mono mb-2" style="color:var(--ink-dimmer)">Appearance
+            </p>
+            <div class="flex gap-2 mb-6">
+                <button type="button" data-theme-choice="dark"
+                    class="theme-option flex-1 py-2.5 rounded-xl text-[11px] font-mono border">Dark</button>
+                <button type="button" data-theme-choice="light"
+                    class="theme-option flex-1 py-2.5 rounded-xl text-[11px] font-mono border">Light</button>
             </div>
 
             <p class="text-[11px] uppercase tracking-wider font-mono mb-2" style="color:var(--ink-dimmer)">Google Sheets
@@ -840,7 +982,7 @@
                     class="flex-1 glass rounded-2xl py-3 text-xs font-mono active:scale-95 transition-transform">Reset
                     today</button>
                 <button id="saveSettingsBtn"
-                    class="flex-1 bg-[#f5f5f3] text-black font-display font-semibold rounded-2xl py-3 text-sm active:scale-95 transition-transform">Save</button>
+                    class="flex-1 bg-[var(--ink)] text-[var(--bg)] font-display font-semibold rounded-2xl py-3 text-sm active:scale-95 transition-transform">Save</button>
             </div>
         </div>
     </div>
@@ -852,7 +994,7 @@
             <div class="flex items-center justify-between mb-1">
                 <h2 class="font-display text-lg font-semibold">Log time</h2>
                 <button id="logTimeClose" class="w-8 h-8 rounded-full flex items-center justify-center glass"><svg
-                        width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f5f5f3" stroke-width="2">
+                        width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M18 6L6 18M6 6l12 12" />
                     </svg></button>
             </div>
@@ -878,7 +1020,7 @@
                 <h2 class="font-display text-lg font-semibold">What did you actually do?</h2>
                 <button id="overrideClose"
                     class="w-8 h-8 rounded-full flex items-center justify-center glass shrink-0"><svg width="14"
-                        height="14" viewBox="0 0 24 24" fill="none" stroke="#f5f5f3" stroke-width="2">
+                        height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M18 6L6 18M6 6l12 12" />
                     </svg></button>
             </div>
@@ -900,7 +1042,7 @@
                     class="flex-1 glass rounded-2xl py-3 text-xs font-mono active:scale-95 transition-transform">Clear
                     swap</button>
                 <button id="saveOverrideBtn"
-                    class="flex-1 bg-[#f5f5f3] text-black font-display font-semibold rounded-2xl py-3 text-sm active:scale-95 transition-transform">Save</button>
+                    class="flex-1 bg-[var(--ink)] text-[var(--bg)] font-display font-semibold rounded-2xl py-3 text-sm active:scale-95 transition-transform">Save</button>
             </div>
         </div>
     </div>
@@ -913,21 +1055,21 @@
                 <h2 class="font-display text-lg font-semibold">Month report</h2>
                 <button id="monthReportClose"
                     class="w-8 h-8 rounded-full flex items-center justify-center glass shrink-0"><svg width="14"
-                        height="14" viewBox="0 0 24 24" fill="none" stroke="#f5f5f3" stroke-width="2">
+                        height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M18 6L6 18M6 6l12 12" />
                     </svg></button>
             </div>
             <div class="flex items-center justify-between mt-3 mb-4 shrink-0">
                 <button id="reportPrevMonth"
                     class="glass rounded-full w-9 h-9 flex items-center justify-center active:scale-90 transition-transform">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f5f5f3" stroke-width="2">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M15 18l-6-6 6-6" />
                     </svg>
                 </button>
                 <p id="reportMonthLabel" class="font-display text-sm font-medium">—</p>
                 <button id="reportNextMonth"
                     class="glass rounded-full w-9 h-9 flex items-center justify-center active:scale-90 transition-transform">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f5f5f3" stroke-width="2">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M9 18l6-6-6-6" />
                     </svg>
                 </button>
@@ -994,6 +1136,26 @@
             return await getStore('settings', {});
         }
 
+        /* ================= Theme ================= */
+        async function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : 'dark');
+            const meta = document.getElementById('metaThemeColor');
+            if (meta) meta.setAttribute('content', theme === 'light' ? '#f5f4f0' : '#050505');
+            document.querySelectorAll('.theme-option').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.themeChoice === (theme === 'light' ? 'light' : 'dark'));
+            });
+            await styleSystemBarsForTheme(theme);
+        }
+        async function initTheme() {
+            const settings = await getSettings();
+            await applyTheme(settings.theme || 'dark');
+        }
+        async function setTheme(theme) {
+            const existing = await getSettings();
+            await setStore('settings', { ...existing, theme });
+            await applyTheme(theme);
+        }
+
         /* ================= Onboarding =================
            Forced on first launch since there is no shared backend
            anymore — gated on settings.onboardingDone (set either after
@@ -1004,7 +1166,7 @@
            Store install has no separate file to hunt down — one button
            copies it straight to the clipboard for pasting into Apps
            Script. */
-        const BACKEND_SCRIPT_B64 = "LyoqCiAqIERpbmkg4oCUIEdvb2dsZSBTaGVldHMgYmFja2VuZAogKiAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KICogRGVwbG95IHRoaXMgYXMgYSBXZWIgQXBwIChFeHRlbnNpb25zID4gQXBwcyBTY3JpcHQsIGluIGEgR29vZ2xlIFNoZWV0KToKICogICAxLiBEZXBsb3kgPiBOZXcgZGVwbG95bWVudCA+IHR5cGUgIldlYiBhcHAiCiAqICAgMi4gRXhlY3V0ZSBhczogTWUKICogICAzLiBXaG8gaGFzIGFjY2VzczogQW55b25lCiAqICAgNC4gQ29weSB0aGUgL2V4ZWMgVVJMIGl0IGdpdmVzIHlvdSBhbmQgcGFzdGUgaXQgaW50bwogKiAgICAgIERpbmkncyBTZXR0aW5ncyA+IEdvb2dsZSBTaGVldHMgZmllbGQuCiAqCiAqIE9uIGZpcnN0IGNhbGwgdGhpcyBjcmVhdGVzIHRhYnMgYXV0b21hdGljYWxseToKICogICBUYXNrcywgVGltZXRhYmxlLCBQcm9maWxlLCBSZWZsZWN0aW9ucywgU2NoZWR1bGUsIFRpbWV0YWJsZUxvZywgQ2hlY2tpbnMKICoKICogUmVzcG9uZHMgdG8gSlNPTlAgKGEgPHNjcmlwdD4gdGFnIEdFVCB3aXRoIGEgP2NhbGxiYWNrPSBwYXJhbSkKICogYmVjYXVzZSBBcHBzIFNjcmlwdCBXZWIgQXBwcyBjYW4ndCBiZSByZWFjaGVkIHdpdGggZmV0Y2goKS9DT1JTCiAqIGZyb20gYSBwYWdlIGhvc3RlZCBlbHNld2hlcmUuCiAqCiAqIEVESVQgWU9VUiBEQVk6IGNoYW5nZSB0aGUgIlNjaGVkdWxlIiB0YWIgZGlyZWN0bHkgdG8gY2hhbmdlIHRoZQogKiB0aW1ldGFibGUg4oCUIG5vIHJlZGVwbG95IG5lZWRlZC4gQ29sdW1uczoKICogICBvcmRlciAgICAgIOKAlCBudW1iZXIgY29udHJvbGxpbmcgZGlzcGxheS9ncm91cCBvcmRlcgogKiAgIGlkICAgICAgICAg4oCUIHNob3J0IHN0YWJsZSBzbHVnIChlLmcuICJ5b2dhIikuIFJlbmFtZSB0aXRsZXMvdGltZXMKICogICAgICAgICAgICAgICAgZnJlZWx5LCBidXQga2VlcCBhbiBpZCBzdGFibGUgb25jZSB5b3UndmUgbG9nZ2VkCiAqICAgICAgICAgICAgICAgIGhpc3RvcnkgYWdhaW5zdCBpdCwgb3IgdGhhdCBoaXN0b3J5IHN0b3BzIGxpbmluZyB1cC4KICogICBzdGFydFRpbWUgLyBlbmRUaW1lIOKAlCAyNC1ob3VyICJIOk1NIiBvciAiSEg6TU0iLCBlLmcuICI1OjAwIiwgIjE4OjE1IgogKiAgIHRpdGxlICAgICAg4oCUIHdoYXQgc2hvd3Mgb24gdGhlIGNhcmQKICogICBncm91cCAgICAgIOKAlCBzZWN0aW9uIGhlYWRpbmcgdGhlIGJsb2NrIGlzIHNob3duIHVuZGVyCiAqIFRoZSB0YWIgaXMgc2VlZGVkIHdpdGggdGhlIGN1cnJlbnQgZGVmYXVsdCBkYXkgdGhlIGZpcnN0IHRpbWUgdGhpcwogKiBzY3JpcHQgcnVuczsgYWZ0ZXIgdGhhdCwgdGhlIHNoZWV0IGlzIHRoZSBzb3VyY2Ugb2YgdHJ1dGguCiAqCiAqIElNUE9SVEFOVDogYWZ0ZXIgcGFzdGluZyB0aGlzIHVwZGF0ZSBpbnRvIHRoZSBBcHBzIFNjcmlwdCBlZGl0b3IsCiAqIHlvdSBNVVNUIHJlZGVwbG95IChEZXBsb3kgPiBNYW5hZ2UgZGVwbG95bWVudHMgPiBFZGl0ID4gVmVyc2lvbjogTmV3CiAqID4gRGVwbG95KSBmb3IgdGhlIG5ldyBzYXZlQ2hlY2tpbiBhY3Rpb24gdG8gZ28gbGl2ZS4gU2F2aW5nIHRoZQogKiBzY3JpcHQgYWxvbmUgZG9lcyBub3QgdXBkYXRlIHRoZSBydW5uaW5nIC9leGVjIGVuZHBvaW50LgogKi8KCmNvbnN0IFNIRUVUX1RBU0tTID0gJ1Rhc2tzJzsKY29uc3QgU0hFRVRfVElNRVRBQkxFID0gJ1RpbWV0YWJsZSc7CmNvbnN0IFNIRUVUX1BST0ZJTEUgPSAnUHJvZmlsZSc7CmNvbnN0IFNIRUVUX1JFRkxFQ1RJT05TID0gJ1JlZmxlY3Rpb25zJzsKY29uc3QgU0hFRVRfU0NIRURVTEUgPSAnU2NoZWR1bGUnOwpjb25zdCBTSEVFVF9USU1FVEFCTEVfTE9HID0gJ1RpbWV0YWJsZUxvZyc7CmNvbnN0IFNIRUVUX0NIRUNLSU5TID0gJ0NoZWNraW5zJzsKCmZ1bmN0aW9uIGRvR2V0KGUpIHsKICBjb25zdCBjYWxsYmFjayA9IGUucGFyYW1ldGVyLmNhbGxiYWNrOwogIGNvbnN0IGFjdGlvbiA9IGUucGFyYW1ldGVyLmFjdGlvbjsKICBsZXQgcGF5bG9hZCA9IHt9OwogIHRyeSB7IHBheWxvYWQgPSBKU09OLnBhcnNlKGUucGFyYW1ldGVyLnBheWxvYWQgfHwgJ3t9Jyk7IH0gY2F0Y2ggKGVycikgeyBwYXlsb2FkID0ge307IH0KCiAgbGV0IHJlc3VsdDsKICB0cnkgewogICAgc3dpdGNoIChhY3Rpb24pIHsKICAgICAgY2FzZSAnZ2V0QWxsJzogcmVzdWx0ID0gaGFuZGxlR2V0QWxsKCk7IGJyZWFrOwogICAgICBjYXNlICdnZXRTY2hlZHVsZSc6IHJlc3VsdCA9IGhhbmRsZUdldFNjaGVkdWxlKCk7IGJyZWFrOwogICAgICBjYXNlICd1cHNlcnRUYXNrJzogcmVzdWx0ID0gaGFuZGxlVXBzZXJ0VGFzayhwYXlsb2FkKTsgYnJlYWs7CiAgICAgIGNhc2UgJ2RlbGV0ZVRhc2snOiByZXN1bHQgPSBoYW5kbGVEZWxldGVUYXNrKHBheWxvYWQpOyBicmVhazsKICAgICAgY2FzZSAndG9nZ2xlQmxvY2snOiByZXN1bHQgPSBoYW5kbGVUb2dnbGVCbG9jayhwYXlsb2FkKTsgYnJlYWs7CiAgICAgIGNhc2UgJ2xvZ092ZXJyaWRlJzogcmVzdWx0ID0gaGFuZGxlTG9nT3ZlcnJpZGUocGF5bG9hZCk7IGJyZWFrOwogICAgICBjYXNlICdzYXZlUmVmbGVjdGlvbic6IHJlc3VsdCA9IGhhbmRsZVNhdmVSZWZsZWN0aW9uKHBheWxvYWQpOyBicmVhazsKICAgICAgY2FzZSAnc2F2ZVByb2ZpbGUnOiByZXN1bHQgPSBoYW5kbGVTYXZlUHJvZmlsZShwYXlsb2FkKTsgYnJlYWs7CiAgICAgIGNhc2UgJ3NhdmVDaGVja2luJzogcmVzdWx0ID0gaGFuZGxlU2F2ZUNoZWNraW4ocGF5bG9hZCk7IGJyZWFrOwogICAgICBkZWZhdWx0OiByZXN1bHQgPSB7IHN0YXR1czogJ2Vycm9yJywgbWVzc2FnZTogJ1Vua25vd24gYWN0aW9uOiAnICsgYWN0aW9uIH07CiAgICB9CiAgfSBjYXRjaCAoZXJyKSB7CiAgICByZXN1bHQgPSB7IHN0YXR1czogJ2Vycm9yJywgbWVzc2FnZTogU3RyaW5nKGVycikgfTsKICB9CgogIGNvbnN0IGJvZHkgPSBjYWxsYmFjawogICAgPyBjYWxsYmFjayArICcoJyArIEpTT04uc3RyaW5naWZ5KHJlc3VsdCkgKyAnKScKICAgIDogSlNPTi5zdHJpbmdpZnkocmVzdWx0KTsKICBjb25zdCBtaW1lID0gY2FsbGJhY2sKICAgID8gQ29udGVudFNlcnZpY2UuTWltZVR5cGUuSkFWQVNDUklQVAogICAgOiBDb250ZW50U2VydmljZS5NaW1lVHlwZS5KU09OOwogIHJldHVybiBDb250ZW50U2VydmljZS5jcmVhdGVUZXh0T3V0cHV0KGJvZHkpLnNldE1pbWVUeXBlKG1pbWUpOwp9CgovKiAtLS0tLS0tLS0tLS0tLS0tIFNoZWV0IGhlbHBlcnMgLS0tLS0tLS0tLS0tLS0tLSAqLwpmdW5jdGlvbiBnZXRTUygpIHsgcmV0dXJuIFNwcmVhZHNoZWV0QXBwLmdldEFjdGl2ZVNwcmVhZHNoZWV0KCk7IH0KCmZ1bmN0aW9uIGdldE9yQ3JlYXRlU2hlZXQobmFtZSwgaGVhZGVycykgewogIGNvbnN0IHNzID0gZ2V0U1MoKTsKICBsZXQgc2hlZXQgPSBzcy5nZXRTaGVldEJ5TmFtZShuYW1lKTsKICBpZiAoIXNoZWV0KSB7CiAgICBzaGVldCA9IHNzLmluc2VydFNoZWV0KG5hbWUpOwogICAgc2hlZXQuYXBwZW5kUm93KGhlYWRlcnMpOwogICAgc2hlZXQuc2V0RnJvemVuUm93cygxKTsKICB9CiAgcmV0dXJuIHNoZWV0Owp9CgovKioKICogUmVmb3JtYXRzIGEgc2luZ2xlIGNlbGwgdmFsdWUgZm9yIEpTT04gb3V0cHV0LiBTaGVldHMgc2lsZW50bHkKICogY29udmVydHMgc3RyaW5ncyB0eXBlZCBpbnRvIFRpbWUvRGF0ZS10eXBlZCBjZWxscyAob3IgYXV0by1kZXRlY3RlZAogKiBhcyBzdWNoKSBpbnRvIGl0cyBvd24gaW50ZXJuYWwgZGF0ZSB2YWx1ZSwgYW5jaG9yZWQgdG8gaXRzIGVwb2NoCiAqIGRhdGUgKERlYyAzMCwgMTg5OSkgZm9yIHRpbWUtb25seSB2YWx1ZXMuIEFwcHMgU2NyaXB0IHJlYWRzIHRoYXQKICogYmFjayBhcyBhIGZ1bGwgSlMgRGF0ZSwgYW5kIEpTT04uc3RyaW5naWZ5KCkgYWx3YXlzIHJlbmRlcnMgRGF0ZQogKiBvYmplY3RzIGluIFVUQyDigJQgd2hpY2ggaXMgd2hhdCBjYXVzZWQgJzQ6MDAnIElTVCB0byBjb21lIG91dCBhcwogKiAnLi4uVDIyOjMwOjAwLjAwMFonIHRoZSBkYXkgYmVmb3JlLgogKgogKiBGaXg6IG5ldmVyIGxldCBhIHJhdyBEYXRlIHJlYWNoIEpTT04uc3RyaW5naWZ5LiBSZWZvcm1hdCBpdCBiYWNrIHRvCiAqIGEgcGxhaW4gc3RyaW5nLCBpbiB0aGUgc3ByZWFkc2hlZXQncyBvd24gdGltZXpvbmUsIHNoYXBlZCB0byB3aGF0CiAqIHRoZSBjb2x1bW4gYWN0dWFsbHkgcmVwcmVzZW50cyAodGltZS1vZi1kYXkgdnMgY2FsZW5kYXIgZGF0ZSB2cwogKiByZWFsIHRpbWVzdGFtcCkuCiAqLwpmdW5jdGlvbiBmb3JtYXRDZWxsVmFsdWUodmFsdWUsIGhlYWRlciwgdHopIHsKICBpZiAoISh2YWx1ZSBpbnN0YW5jZW9mIERhdGUpKSByZXR1cm4gdmFsdWU7CiAgaWYgKGhlYWRlciA9PT0gJ3N0YXJ0VGltZScgfHwgaGVhZGVyID09PSAnZW5kVGltZScpIHsKICAgIHJldHVybiBVdGlsaXRpZXMuZm9ybWF0RGF0ZSh2YWx1ZSwgdHosICdISDptbScpOwogIH0KICBpZiAoaGVhZGVyID09PSAnc3RhcnREYXRlJyB8fCBoZWFkZXIgPT09ICdlbmREYXRlJyB8fCBoZWFkZXIgPT09ICdkYXRlJykgewogICAgcmV0dXJuIFV0aWxpdGllcy5mb3JtYXREYXRlKHZhbHVlLCB0eiwgJ3l5eXktTU0tZGQnKTsKICB9CiAgLy8gRmFsbGJhY2sgZm9yIGFueSBvdGhlciBEYXRlLXR5cGVkIGNvbHVtbiAoZS5nLiB1cGRhdGVkQXQvdGltZXN0YW1wCiAgLy8gY2VsbHMgdGhhdCBnb3QgYXV0by1jb252ZXJ0ZWQpIOKAlCBzdGlsbCBhIHJlYWwgdGltZXN0YW1wLCBqdXN0CiAgLy8gcmVuZGVyZWQgaW4gbG9jYWwgdGltZSBpbnN0ZWFkIG9mIHNpbGVudGx5LXNoaWZ0ZWQgVVRDLgogIHJldHVybiBVdGlsaXRpZXMuZm9ybWF0RGF0ZSh2YWx1ZSwgdHosICJ5eXl5LU1NLWRkJ1QnSEg6bW06c3MuU1NTJ1onIik7Cn0KCmZ1bmN0aW9uIHNoZWV0VG9PYmplY3RzKHNoZWV0KSB7CiAgY29uc3QgdmFsdWVzID0gc2hlZXQuZ2V0RGF0YVJhbmdlKCkuZ2V0VmFsdWVzKCk7CiAgaWYgKHZhbHVlcy5sZW5ndGggPCAyKSByZXR1cm4gW107CiAgY29uc3QgaGVhZGVycyA9IHZhbHVlc1swXTsKICBjb25zdCB0eiA9IGdldFNTKCkuZ2V0U3ByZWFkc2hlZXRUaW1lWm9uZSgpOwogIHJldHVybiB2YWx1ZXMuc2xpY2UoMSkKICAgIC5maWx0ZXIocm93ID0+IHJvdy5zb21lKGNlbGwgPT4gY2VsbCAhPT0gJycgJiYgY2VsbCAhPT0gbnVsbCkpCiAgICAubWFwKHJvdyA9PiB7CiAgICAgIGNvbnN0IG9iaiA9IHt9OwogICAgICBoZWFkZXJzLmZvckVhY2goKGgsIGkpID0+IHsgb2JqW2hdID0gZm9ybWF0Q2VsbFZhbHVlKHJvd1tpXSwgaCwgdHopOyB9KTsKICAgICAgcmV0dXJuIG9iajsKICAgIH0pOwp9CgpmdW5jdGlvbiBmaW5kUm93SW5kZXhCeUlkKHNoZWV0LCBpZENvbE5hbWUsIGlkKSB7CiAgY29uc3QgdmFsdWVzID0gc2hlZXQuZ2V0RGF0YVJhbmdlKCkuZ2V0VmFsdWVzKCk7CiAgY29uc3QgaGVhZGVycyA9IHZhbHVlc1swXTsKICBjb25zdCBpZENvbCA9IGhlYWRlcnMuaW5kZXhPZihpZENvbE5hbWUpOwogIGZvciAobGV0IHIgPSAxOyByIDwgdmFsdWVzLmxlbmd0aDsgcisrKSB7CiAgICBpZiAoU3RyaW5nKHZhbHVlc1tyXVtpZENvbF0pID09PSBTdHJpbmcoaWQpKSByZXR1cm4gciArIDE7IC8vIDEtaW5kZXhlZCBzaGVldCByb3cKICB9CiAgcmV0dXJuIC0xOwp9CgovKioKICogTGlrZSBmaW5kUm93SW5kZXhCeUlkIGJ1dCBtYXRjaGVzIG9uIHR3byBjb2x1bW5zIGF0IG9uY2Ug4oCUIHVzZWQgZm9yCiAqIFRpbWV0YWJsZS9UaW1ldGFibGVMb2cgcm93cyB3aGljaCBhcmUga2V5ZWQgYnkgKGRhdGUsIGJsb2NrKSByYXRoZXIKICogdGhhbiBhIHNpbmdsZSBpZC4gVmFsdWVzIGFyZSBub3JtYWxpemVkIHRocm91Z2ggdGhlIHNhbWUKICogZm9ybWF0Q2VsbFZhbHVlKCkgcGF0aCB1c2VkIGZvciBvdXRwdXQsIHNvIGEgJ2RhdGUnIGNlbGwgdGhhdCBnb3QKICogYXV0by1jb252ZXJ0ZWQgdG8gYSBEYXRlIHR5cGUgYnkgU2hlZXRzIHN0aWxsIGNvbXBhcmVzIGVxdWFsIHRvIHRoZQogKiBwbGFpbiAiWVlZWS1NTS1ERCIgc3RyaW5nIHRoZSBjbGllbnQgc2VuZHMg4oCUIG90aGVyd2lzZSBhIHN0cmljdAogKiA9PT0gYWdhaW5zdCBhIHJhdyBEYXRlIHNpbGVudGx5IGZhaWxzIHRvIG1hdGNoIGFuZCBhcHBlbmRzIGEKICogZHVwbGljYXRlIHJvdyBpbnN0ZWFkIG9mIHVwZGF0aW5nIHRoZSBleGlzdGluZyBvbmUuCiAqLwpmdW5jdGlvbiBmaW5kUm93SW5kZXhCeVR3b0NvbHMoc2hlZXQsIGNvbE5hbWVBLCB2YWx1ZUEsIGNvbE5hbWVCLCB2YWx1ZUIpIHsKICBjb25zdCB2YWx1ZXMgPSBzaGVldC5nZXREYXRhUmFuZ2UoKS5nZXRWYWx1ZXMoKTsKICBjb25zdCBoZWFkZXJzID0gdmFsdWVzWzBdOwogIGNvbnN0IGNvbEEgPSBoZWFkZXJzLmluZGV4T2YoY29sTmFtZUEpOwogIGNvbnN0IGNvbEIgPSBoZWFkZXJzLmluZGV4T2YoY29sTmFtZUIpOwogIGNvbnN0IHR6ID0gZ2V0U1MoKS5nZXRTcHJlYWRzaGVldFRpbWVab25lKCk7CiAgZm9yIChsZXQgciA9IDE7IHIgPCB2YWx1ZXMubGVuZ3RoOyByKyspIHsKICAgIGNvbnN0IGNlbGxBID0gZm9ybWF0Q2VsbFZhbHVlKHZhbHVlc1tyXVtjb2xBXSwgY29sTmFtZUEsIHR6KTsKICAgIGNvbnN0IGNlbGxCID0gZm9ybWF0Q2VsbFZhbHVlKHZhbHVlc1tyXVtjb2xCXSwgY29sTmFtZUIsIHR6KTsKICAgIGlmIChjZWxsQSA9PT0gdmFsdWVBICYmIGNlbGxCID09PSB2YWx1ZUIpIHJldHVybiByICsgMTsKICB9CiAgcmV0dXJuIC0xOwp9CgovKiAtLS0tLS0tLS0tLS0tLS0tIFNjaGVkdWxlIHNlZWQgKGZpcnN0LXJ1biBkZWZhdWx0IGRheSkgLS0tLS0tLS0tLS0tLS0tLSAqLwpjb25zdCBTQ0hFRFVMRV9TRUVEID0gWwogIFsxLCAnbWVkaXRhdGlvbicsICc0OjAwJywgJzU6MDAnLCAnTWVkaXRhdGlvbiwgc3R1ZHksIHBsYW4gdGhlIGRheScsICdNb3JuaW5nJ10sCiAgWzIsICd5b2dhJywgJzU6MDAnLCAnNjowMCcsICdZb2dhIC8gRXhlcmNpc2UnLCAnTW9ybmluZyddLAogIFszLCAnYmF0aCcsICc2OjAwJywgJzc6MDAnLCAnQmF0aCwgZ2V0IHJlYWR5JywgJ01vcm5pbmcnXSwKICBbNCwgJ2JyZWFrZmFzdCcsICc3OjAwJywgJzk6MTUnLCAnQnJlYWtmYXN0LCBmYW1pbHkgdGltZSwgZ2V0IGRhdWdodGVyIHJlYWR5JywgJ01vcm5pbmcnXSwKICBbNSwgJ2Ryb3BvZmYnLCAnOToxNScsICc5OjQ1JywgJ1NjaG9vbCBkcm9wLW9mZiArIGJhY2sgaG9tZScsICdNb3JuaW5nJ10sCiAgWzYsICdjcmVhdGl2ZScsICc5OjQ1JywgJzEwOjE1JywgJ0NyZWF0aXZlICYgc29jaWFsIHBvc3QgZm9yIEFtb3J0cmVlJywgJ01hcmtldGluZyAmIE91dHJlYWNoJ10sCiAgWzcsICdvdXRyZWFjaCcsICcxMDoxNScsICcxMToxNScsICdPdXRyZWFjaCDigJQgMTArIG1lc3NhZ2VzIC8gZW1haWxzJywgJ01hcmtldGluZyAmIE91dHJlYWNoJ10sCiAgWzgsICdjbGllbnR3b3JrMScsICcxMToxNScsICcxMzowMCcsICdDbGllbnQgd29yayAoaWYgYW55KScsICdNYXJrZXRpbmcgJiBPdXRyZWFjaCddLAogIFs5LCAnbHVuY2gnLCAnMTM6MDAnLCAnMTQ6MDAnLCAnTHVuY2gnLCAnQnJlYWsnXSwKICBbMTAsICdkcm9wc2hpcCcsICcxNDowMCcsICcxNTowMCcsICdEcm9wc2hpcHBpbmcgc2V0dXAgLyBtYW5hZ2VtZW50JywgJ0RlZXAgV29yayddLAogIFsxMSwgJ2NvcmV3b3JrJywgJzE1OjAwJywgJzE4OjAwJywgJ0NvcmUgd29yayDigJQgTWljcm9yZWxpYyAvIEFtb3J0cmVlJywgJ0RlZXAgV29yayddLAogIFsxMiwgJ2JyZWFrMicsICcxODowMCcsICcxODoxNScsICdCcmVhayAvIHRlYScsICdMZWFybmluZyddLAogIFsxMywgJ2xlYXJuaW5nJywgJzE4OjE1JywgJzE5OjE1JywgJ1NlbGYtYnJhbmRpbmcgdHJhaW5pbmcgLyBuOG4gYXV0b21hdGlvbicsICdMZWFybmluZyddLAogIFsxNCwgJ2ZhbWlseScsICcxOToxNScsICcyMTowMCcsICdGYW1pbHkgdGltZSArIGRpbm5lcicsICdFdmVuaW5nJ10sCiAgWzE1LCAncGxhbmRheScsICcyMTowMCcsICcyMTozMCcsICJQbGFuIHRvbW9ycm93J3MgdG9wIDMgdGFza3MiLCAnRXZlbmluZyddLAogIFsxNiwgJ3dpbmRkb3duJywgJzIxOjMwJywgJzIzOjAwJywgJ1dpbmQgZG93biwgc2xlZXAgcHJlcCcsICdFdmVuaW5nJ10KXTsKCmZ1bmN0aW9uIGdldE9yU2VlZFNjaGVkdWxlU2hlZXQoKSB7CiAgY29uc3Qgc3MgPSBnZXRTUygpOwogIGNvbnN0IGV4aXN0ZWQgPSAhIXNzLmdldFNoZWV0QnlOYW1lKFNIRUVUX1NDSEVEVUxFKTsKICBjb25zdCBzaGVldCA9IGdldE9yQ3JlYXRlU2hlZXQoU0hFRVRfU0NIRURVTEUsIFsnb3JkZXInLCAnaWQnLCAnc3RhcnRUaW1lJywgJ2VuZFRpbWUnLCAndGl0bGUnLCAnZ3JvdXAnXSk7CiAgaWYgKCFleGlzdGVkKSB7CiAgICBTQ0hFRFVMRV9TRUVELmZvckVhY2gocm93ID0+IHNoZWV0LmFwcGVuZFJvdyhyb3cpKTsKICB9CiAgcmV0dXJuIHNoZWV0Owp9CgovKiAtLS0tLS0tLS0tLS0tLS0tIEhhbmRsZXJzIC0tLS0tLS0tLS0tLS0tLS0gKi8KZnVuY3Rpb24gaGFuZGxlR2V0QWxsKCkgewogIGNvbnN0IHRhc2tzU2hlZXQgPSBnZXRPckNyZWF0ZVNoZWV0KFNIRUVUX1RBU0tTLAogICAgWydpZCcsICdjbGllbnRJZCcsICdkZXNjcmlwdGlvbicsICdzdGFydERhdGUnLCAnZW5kRGF0ZScsICdzdGF0dXMnLCAndG90YWxNaW51dGVzJywgJ3VwZGF0ZWRBdCddKTsKICBjb25zdCB0aW1ldGFibGVTaGVldCA9IGdldE9yQ3JlYXRlU2hlZXQoU0hFRVRfVElNRVRBQkxFLAogICAgWydkYXRlJywgJ2Jsb2NrJywgJ2NvbXBsZXRlZCcsICd1cGRhdGVkQXQnXSk7CiAgY29uc3QgcHJvZmlsZVNoZWV0ID0gZ2V0T3JDcmVhdGVTaGVldChTSEVFVF9QUk9GSUxFLCBbJ25hbWUnLCAndXBkYXRlZEF0J10pOwogIGNvbnN0IHNjaGVkdWxlU2hlZXQgPSBnZXRPclNlZWRTY2hlZHVsZVNoZWV0KCk7CgogIGNvbnN0IGNsaWVudFRhc2tzID0gc2hlZXRUb09iamVjdHModGFza3NTaGVldCk7CiAgY29uc3QgdGltZXRhYmxlID0gc2hlZXRUb09iamVjdHModGltZXRhYmxlU2hlZXQpOwogIGNvbnN0IHByb2ZpbGVSb3dzID0gc2hlZXRUb09iamVjdHMocHJvZmlsZVNoZWV0KTsKICBjb25zdCBwcm9maWxlID0gcHJvZmlsZVJvd3MubGVuZ3RoID8gcHJvZmlsZVJvd3NbcHJvZmlsZVJvd3MubGVuZ3RoIC0gMV0gOiB7IG5hbWU6ICdEaW5pJyB9OwogIGNvbnN0IHNjaGVkdWxlID0gc2hlZXRUb09iamVjdHMoc2NoZWR1bGVTaGVldCk7CgogIHJldHVybiB7IHN0YXR1czogJ29rJywgY2xpZW50VGFza3MsIHRpbWV0YWJsZSwgcHJvZmlsZSwgc2NoZWR1bGUgfTsKfQoKZnVuY3Rpb24gaGFuZGxlR2V0U2NoZWR1bGUoKSB7CiAgY29uc3Qgc2NoZWR1bGVTaGVldCA9IGdldE9yU2VlZFNjaGVkdWxlU2hlZXQoKTsKICByZXR1cm4geyBzdGF0dXM6ICdvaycsIHNjaGVkdWxlOiBzaGVldFRvT2JqZWN0cyhzY2hlZHVsZVNoZWV0KSB9Owp9CgpmdW5jdGlvbiBoYW5kbGVVcHNlcnRUYXNrKHApIHsKICBjb25zdCBzaGVldCA9IGdldE9yQ3JlYXRlU2hlZXQoU0hFRVRfVEFTS1MsCiAgICBbJ2lkJywgJ2NsaWVudElkJywgJ2Rlc2NyaXB0aW9uJywgJ3N0YXJ0RGF0ZScsICdlbmREYXRlJywgJ3N0YXR1cycsICd0b3RhbE1pbnV0ZXMnLCAndXBkYXRlZEF0J10pOwogIGNvbnN0IG5vdyA9IG5ldyBEYXRlKCkudG9JU09TdHJpbmcoKTsKICBjb25zdCByb3cgPSBbcC5pZCwgcC5jbGllbnRJZCwgcC5kZXNjcmlwdGlvbiwgcC5zdGFydERhdGUsIHAuZW5kRGF0ZSwgcC5zdGF0dXMsIHAudG90YWxNaW51dGVzIHx8IDAsIG5vd107CiAgY29uc3QgZXhpc3RpbmdSb3cgPSBmaW5kUm93SW5kZXhCeUlkKHNoZWV0LCAnaWQnLCBwLmlkKTsKICBpZiAoZXhpc3RpbmdSb3cgPiAwKSB7CiAgICBzaGVldC5nZXRSYW5nZShleGlzdGluZ1JvdywgMSwgMSwgcm93Lmxlbmd0aCkuc2V0VmFsdWVzKFtyb3ddKTsKICB9IGVsc2UgewogICAgc2hlZXQuYXBwZW5kUm93KHJvdyk7CiAgfQogIHJldHVybiB7IHN0YXR1czogJ29rJyB9Owp9CgpmdW5jdGlvbiBoYW5kbGVEZWxldGVUYXNrKHApIHsKICBjb25zdCBzaGVldCA9IGdldE9yQ3JlYXRlU2hlZXQoU0hFRVRfVEFTS1MsCiAgICBbJ2lkJywgJ2NsaWVudElkJywgJ2Rlc2NyaXB0aW9uJywgJ3N0YXJ0RGF0ZScsICdlbmREYXRlJywgJ3N0YXR1cycsICd0b3RhbE1pbnV0ZXMnLCAndXBkYXRlZEF0J10pOwogIGNvbnN0IGV4aXN0aW5nUm93ID0gZmluZFJvd0luZGV4QnlJZChzaGVldCwgJ2lkJywgcC5pZCk7CiAgaWYgKGV4aXN0aW5nUm93ID4gMCkgc2hlZXQuZGVsZXRlUm93KGV4aXN0aW5nUm93KTsKICByZXR1cm4geyBzdGF0dXM6ICdvaycgfTsKfQoKZnVuY3Rpb24gaGFuZGxlVG9nZ2xlQmxvY2socCkgewogIGNvbnN0IHNoZWV0ID0gZ2V0T3JDcmVhdGVTaGVldChTSEVFVF9USU1FVEFCTEUsIFsnZGF0ZScsICdibG9jaycsICdjb21wbGV0ZWQnLCAndXBkYXRlZEF0J10pOwogIGNvbnN0IGZvdW5kUm93ID0gZmluZFJvd0luZGV4QnlUd29Db2xzKHNoZWV0LCAnZGF0ZScsIHAuZGF0ZSwgJ2Jsb2NrJywgcC5ibG9jayk7CiAgY29uc3Qgbm93ID0gbmV3IERhdGUoKS50b0lTT1N0cmluZygpOwogIGNvbnN0IHJvdyA9IFtwLmRhdGUsIHAuYmxvY2ssIHAuY29tcGxldGVkLCBub3ddOwogIGlmIChmb3VuZFJvdyA+IDApIHsKICAgIHNoZWV0LmdldFJhbmdlKGZvdW5kUm93LCAxLCAxLCByb3cubGVuZ3RoKS5zZXRWYWx1ZXMoW3Jvd10pOwogIH0gZWxzZSB7CiAgICBzaGVldC5hcHBlbmRSb3cocm93KTsKICB9CiAgcmV0dXJuIHsgc3RhdHVzOiAnb2snIH07Cn0KCi8qKgogKiBMb2dzIGEgInN3YXAiIOKAlCB3aGF0IHdhcyBhY3R1YWxseSBkb25lIGluc3RlYWQgb2YgdGhlIHBsYW5uZWQgYmxvY2sg4oCUCiAqIGtleWVkIGJ5IChkYXRlLCBibG9jayksIHNhbWUgdXBzZXJ0LWJ5LXR3by1jb2x1bW5zIHBhdHRlcm4gYXMKICogaGFuZGxlVG9nZ2xlQmxvY2suIEFuIGVtcHR5IGFjdHVhbFRpdGxlIG1lYW5zIHRoZSBzd2FwIHdhcyBjbGVhcmVkLgogKi8KZnVuY3Rpb24gaGFuZGxlTG9nT3ZlcnJpZGUocCkgewogIGNvbnN0IHNoZWV0ID0gZ2V0T3JDcmVhdGVTaGVldChTSEVFVF9USU1FVEFCTEVfTE9HLAogICAgWydkYXRlJywgJ2Jsb2NrJywgJ3BsYW5uZWRUaXRsZScsICdhY3R1YWxUaXRsZScsICdjb21wbGV0ZWQnLCAndXBkYXRlZEF0J10pOwogIGNvbnN0IG5vdyA9IG5ldyBEYXRlKCkudG9JU09TdHJpbmcoKTsKICBjb25zdCByb3cgPSBbcC5kYXRlLCBwLmJsb2NrLCBwLnBsYW5uZWRUaXRsZSB8fCAnJywgcC5hY3R1YWxUaXRsZSB8fCAnJywgISFwLmNvbXBsZXRlZCwgbm93XTsKICBjb25zdCBmb3VuZFJvdyA9IGZpbmRSb3dJbmRleEJ5VHdvQ29scyhzaGVldCwgJ2RhdGUnLCBwLmRhdGUsICdibG9jaycsIHAuYmxvY2spOwogIGlmIChmb3VuZFJvdyA+IDApIHsKICAgIHNoZWV0LmdldFJhbmdlKGZvdW5kUm93LCAxLCAxLCByb3cubGVuZ3RoKS5zZXRWYWx1ZXMoW3Jvd10pOwogIH0gZWxzZSB7CiAgICBzaGVldC5hcHBlbmRSb3cocm93KTsKICB9CiAgcmV0dXJuIHsgc3RhdHVzOiAnb2snIH07Cn0KCmZ1bmN0aW9uIGhhbmRsZVNhdmVSZWZsZWN0aW9uKHApIHsKICBjb25zdCBzaGVldCA9IGdldE9yQ3JlYXRlU2hlZXQoU0hFRVRfUkVGTEVDVElPTlMsCiAgICBbJ3Rhc2tJZCcsICdjbGllbnRJZCcsICdkZXNjcmlwdGlvbicsICdxdWFsaXR5JywgJ2RlbGl2ZXJlZCcsICdibG9ja2VycycsICdmb2xsb3dVcCcsICdjb25maWRlbmNlJywgJ25vdGVzJywgJ3RpbWVzdGFtcCddKTsKICBzaGVldC5hcHBlbmRSb3coWwogICAgcC50YXNrSWQsIHAuY2xpZW50SWQsIHAuZGVzY3JpcHRpb24sIHAucXVhbGl0eSwgcC5kZWxpdmVyZWQsCiAgICBwLmJsb2NrZXJzLCBwLmZvbGxvd1VwLCBwLmNvbmZpZGVuY2UsIHAubm90ZXMsIG5ldyBEYXRlKCkudG9JU09TdHJpbmcoKQogIF0pOwogIHJldHVybiB7IHN0YXR1czogJ29rJyB9Owp9CgpmdW5jdGlvbiBoYW5kbGVTYXZlUHJvZmlsZShwKSB7CiAgY29uc3Qgc2hlZXQgPSBnZXRPckNyZWF0ZVNoZWV0KFNIRUVUX1BST0ZJTEUsIFsnbmFtZScsICd1cGRhdGVkQXQnXSk7CiAgc2hlZXQuYXBwZW5kUm93KFtwLm5hbWUsIG5ldyBEYXRlKCkudG9JU09TdHJpbmcoKV0pOwogIHJldHVybiB7IHN0YXR1czogJ29rJyB9Owp9CgovKioKICogTG9ncyBhIDUtbWludXRlIGNoZWNrLWluIOKAlCB0aGUgc2hvcnQgc3VydmV5IHRoYXQgYXV0by1vcGVucyBvbiB0aGUKICogY2xpZW50IHdoZW4gYSB0aW1ldGFibGUgYmxvY2sgaGFzIDUgbWludXRlcyBsZWZ0LiBBcHBlbmRlZCwgbm90CiAqIHVwc2VydGVkLCBzbyBhIGJsb2NrIHZpc2l0ZWQgbXVsdGlwbGUgdGltZXMgYWNyb3NzIGRpZmZlcmVudCBkYXlzCiAqIChvciByZS1hbnN3ZXJlZCB0aGUgc2FtZSBkYXkpIGtlZXBzIGl0cyBmdWxsIGhpc3RvcnkgcmF0aGVyIHRoYW4KICogb3ZlcndyaXRpbmcgdGhlIHByZXZpb3VzIGFuc3dlciDigJQgdW5saWtlIFRhc2tzL1RpbWV0YWJsZSByb3dzLAogKiB3aGljaCByZXByZXNlbnQgY3VycmVudCBzdGF0ZSwgZWFjaCBjaGVjay1pbiBpcyBpdHMgb3duIG1vbWVudCBpbgogKiB0aW1lIHdvcnRoIGtlZXBpbmcuCiAqLwpmdW5jdGlvbiBoYW5kbGVTYXZlQ2hlY2tpbihwKSB7CiAgY29uc3Qgc2hlZXQgPSBnZXRPckNyZWF0ZVNoZWV0KFNIRUVUX0NIRUNLSU5TLAogICAgWydkYXRlJywgJ2Jsb2NrJywgJ2Jsb2NrVGl0bGUnLCAnbW9vZCcsICdvblRyYWNrJywgJ2ZvY3VzJywgJ2VuZXJneScsICdibG9ja2VyJywgJ25vdGVzJywgJ3RpbWVzdGFtcCddKTsKICBzaGVldC5hcHBlbmRSb3coWwogICAgcC5kYXRlLCBwLmJsb2NrLCBwLmJsb2NrVGl0bGUsIHAubW9vZCwgcC5vblRyYWNrLAogICAgcC5mb2N1cywgcC5lbmVyZ3ksIHAuYmxvY2tlciwgcC5ub3RlcywgbmV3IERhdGUoKS50b0lTT1N0cmluZygpCiAgXSk7CiAgcmV0dXJuIHsgc3RhdHVzOiAnb2snIH07Cn0K";
+        const BACKEND_SCRIPT_B64 = "LyoqCiAqIERpbmkg4oCUIEdvb2dsZSBTaGVldHMgYmFja2VuZAogKiAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KICogRGVwbG95IHRoaXMgYXMgYSBXZWIgQXBwIChFeHRlbnNpb25zID4gQXBwcyBTY3JpcHQsIGluIGEgR29vZ2xlIFNoZWV0KToKICogICAxLiBEZXBsb3kgPiBOZXcgZGVwbG95bWVudCA+IHR5cGUgIldlYiBhcHAiCiAqICAgMi4gRXhlY3V0ZSBhczogTWUKICogICAzLiBXaG8gaGFzIGFjY2VzczogQW55b25lCiAqICAgNC4gQ29weSB0aGUgL2V4ZWMgVVJMIGl0IGdpdmVzIHlvdSBhbmQgcGFzdGUgaXQgaW50bwogKiAgICAgIERpbmkncyBTZXR0aW5ncyA+IEdvb2dsZSBTaGVldHMgZmllbGQuCiAqCiAqIE9uIGZpcnN0IGNhbGwgdGhpcyBjcmVhdGVzIHRhYnMgYXV0b21hdGljYWxseToKICogICBUYXNrcywgVGltZXRhYmxlLCBQcm9maWxlLCBSZWZsZWN0aW9ucywgU2NoZWR1bGUsIFRpbWV0YWJsZUxvZywgQ2hlY2tpbnMKICoKICogUmVzcG9uZHMgdG8gSlNPTlAgKGEgPHNjcmlwdD4gdGFnIEdFVCB3aXRoIGEgP2NhbGxiYWNrPSBwYXJhbSkKICogYmVjYXVzZSBBcHBzIFNjcmlwdCBXZWIgQXBwcyBjYW4ndCBiZSByZWFjaGVkIHdpdGggZmV0Y2goKS9DT1JTCiAqIGZyb20gYSBwYWdlIGhvc3RlZCBlbHNld2hlcmUuCiAqCiAqIEVESVQgWU9VUiBEQVk6IGNoYW5nZSB0aGUgIlNjaGVkdWxlIiB0YWIgZGlyZWN0bHkgdG8gY2hhbmdlIHRoZQogKiB0aW1ldGFibGUg4oCUIG5vIHJlZGVwbG95IG5lZWRlZC4gQ29sdW1uczoKICogICBvcmRlciAgICAgIOKAlCBudW1iZXIgY29udHJvbGxpbmcgZGlzcGxheS9ncm91cCBvcmRlcgogKiAgIGlkICAgICAgICAg4oCUIHNob3J0IHN0YWJsZSBzbHVnIChlLmcuICJ5b2dhIikuIFJlbmFtZSB0aXRsZXMvdGltZXMKICogICAgICAgICAgICAgICAgZnJlZWx5LCBidXQga2VlcCBhbiBpZCBzdGFibGUgb25jZSB5b3UndmUgbG9nZ2VkCiAqICAgICAgICAgICAgICAgIGhpc3RvcnkgYWdhaW5zdCBpdCwgb3IgdGhhdCBoaXN0b3J5IHN0b3BzIGxpbmluZyB1cC4KICogICBzdGFydFRpbWUgLyBlbmRUaW1lIOKAlCAyNC1ob3VyICJIOk1NIiBvciAiSEg6TU0iLCBlLmcuICI1OjAwIiwgIjE4OjE1IgogKiAgIHRpdGxlICAgICAg4oCUIHdoYXQgc2hvd3Mgb24gdGhlIGNhcmQKICogICBncm91cCAgICAgIOKAlCBzZWN0aW9uIGhlYWRpbmcgdGhlIGJsb2NrIGlzIHNob3duIHVuZGVyCiAqIFRoZSB0YWIgaXMgc2VlZGVkIHdpdGggdGhlIGN1cnJlbnQgZGVmYXVsdCBkYXkgdGhlIGZpcnN0IHRpbWUgdGhpcwogKiBzY3JpcHQgcnVuczsgYWZ0ZXIgdGhhdCwgdGhlIHNoZWV0IGlzIHRoZSBzb3VyY2Ugb2YgdHJ1dGguCiAqCiAqIElNUE9SVEFOVDogYWZ0ZXIgcGFzdGluZyB0aGlzIHVwZGF0ZSBpbnRvIHRoZSBBcHBzIFNjcmlwdCBlZGl0b3IsCiAqIHlvdSBNVVNUIHJlZGVwbG95IChEZXBsb3kgPiBNYW5hZ2UgZGVwbG95bWVudHMgPiBFZGl0ID4gVmVyc2lvbjogTmV3CiAqID4gRGVwbG95KSBmb3IgdGhlIG5ldyBzYXZlQ2hlY2tpbiBhY3Rpb24gdG8gZ28gbGl2ZS4gU2F2aW5nIHRoZQogKiBzY3JpcHQgYWxvbmUgZG9lcyBub3QgdXBkYXRlIHRoZSBydW5uaW5nIC9leGVjIGVuZHBvaW50LgogKi8KCmNvbnN0IFNIRUVUX1RBU0tTID0gJ1Rhc2tzJzsKY29uc3QgU0hFRVRfVElNRVRBQkxFID0gJ1RpbWV0YWJsZSc7CmNvbnN0IFNIRUVUX1BST0ZJTEUgPSAnUHJvZmlsZSc7CmNvbnN0IFNIRUVUX1JFRkxFQ1RJT05TID0gJ1JlZmxlY3Rpb25zJzsKY29uc3QgU0hFRVRfU0NIRURVTEUgPSAnU2NoZWR1bGUnOwpjb25zdCBTSEVFVF9USU1FVEFCTEVfTE9HID0gJ1RpbWV0YWJsZUxvZyc7CmNvbnN0IFNIRUVUX0NIRUNLSU5TID0gJ0NoZWNraW5zJzsKCmZ1bmN0aW9uIGRvR2V0KGUpIHsKICBjb25zdCBjYWxsYmFjayA9IGUucGFyYW1ldGVyLmNhbGxiYWNrOwogIGNvbnN0IGFjdGlvbiA9IGUucGFyYW1ldGVyLmFjdGlvbjsKICBsZXQgcGF5bG9hZCA9IHt9OwogIHRyeSB7IHBheWxvYWQgPSBKU09OLnBhcnNlKGUucGFyYW1ldGVyLnBheWxvYWQgfHwgJ3t9Jyk7IH0gY2F0Y2ggKGVycikgeyBwYXlsb2FkID0ge307IH0KCiAgbGV0IHJlc3VsdDsKICB0cnkgewogICAgc3dpdGNoIChhY3Rpb24pIHsKICAgICAgY2FzZSAnZ2V0QWxsJzogcmVzdWx0ID0gaGFuZGxlR2V0QWxsKCk7IGJyZWFrOwogICAgICBjYXNlICdnZXRTY2hlZHVsZSc6IHJlc3VsdCA9IGhhbmRsZUdldFNjaGVkdWxlKCk7IGJyZWFrOwogICAgICBjYXNlICd1cHNlcnRUYXNrJzogcmVzdWx0ID0gaGFuZGxlVXBzZXJ0VGFzayhwYXlsb2FkKTsgYnJlYWs7CiAgICAgIGNhc2UgJ2RlbGV0ZVRhc2snOiByZXN1bHQgPSBoYW5kbGVEZWxldGVUYXNrKHBheWxvYWQpOyBicmVhazsKICAgICAgY2FzZSAndG9nZ2xlQmxvY2snOiByZXN1bHQgPSBoYW5kbGVUb2dnbGVCbG9jayhwYXlsb2FkKTsgYnJlYWs7CiAgICAgIGNhc2UgJ2xvZ092ZXJyaWRlJzogcmVzdWx0ID0gaGFuZGxlTG9nT3ZlcnJpZGUocGF5bG9hZCk7IGJyZWFrOwogICAgICBjYXNlICdzYXZlUmVmbGVjdGlvbic6IHJlc3VsdCA9IGhhbmRsZVNhdmVSZWZsZWN0aW9uKHBheWxvYWQpOyBicmVhazsKICAgICAgY2FzZSAnc2F2ZVByb2ZpbGUnOiByZXN1bHQgPSBoYW5kbGVTYXZlUHJvZmlsZShwYXlsb2FkKTsgYnJlYWs7CiAgICAgIGNhc2UgJ3NhdmVDaGVja2luJzogcmVzdWx0ID0gaGFuZGxlU2F2ZUNoZWNraW4ocGF5bG9hZCk7IGJyZWFrOwogICAgICBkZWZhdWx0OiByZXN1bHQgPSB7IHN0YXR1czogJ2Vycm9yJywgbWVzc2FnZTogJ1Vua25vd24gYWN0aW9uOiAnICsgYWN0aW9uIH07CiAgICB9CiAgfSBjYXRjaCAoZXJyKSB7CiAgICByZXN1bHQgPSB7IHN0YXR1czogJ2Vycm9yJywgbWVzc2FnZTogU3RyaW5nKGVycikgfTsKICB9CgogIGNvbnN0IGJvZHkgPSBjYWxsYmFjawogICAgPyBjYWxsYmFjayArICcoJyArIEpTT04uc3RyaW5naWZ5KHJlc3VsdCkgKyAnKScKICAgIDogSlNPTi5zdHJpbmdpZnkocmVzdWx0KTsKICBjb25zdCBtaW1lID0gY2FsbGJhY2sKICAgID8gQ29udGVudFNlcnZpY2UuTWltZVR5cGUuSkFWQVNDUklQVAogICAgOiBDb250ZW50U2VydmljZS5NaW1lVHlwZS5KU09OOwogIHJldHVybiBDb250ZW50U2VydmljZS5jcmVhdGVUZXh0T3V0cHV0KGJvZHkpLnNldE1pbWVUeXBlKG1pbWUpOwp9CgovKiAtLS0tLS0tLS0tLS0tLS0tIFNoZWV0IGhlbHBlcnMgLS0tLS0tLS0tLS0tLS0tLSAqLwpmdW5jdGlvbiBnZXRTUygpIHsgcmV0dXJuIFNwcmVhZHNoZWV0QXBwLmdldEFjdGl2ZVNwcmVhZHNoZWV0KCk7IH0KCmZ1bmN0aW9uIGdldE9yQ3JlYXRlU2hlZXQobmFtZSwgaGVhZGVycykgewogIGNvbnN0IHNzID0gZ2V0U1MoKTsKICBsZXQgc2hlZXQgPSBzcy5nZXRTaGVldEJ5TmFtZShuYW1lKTsKICBpZiAoIXNoZWV0KSB7CiAgICBzaGVldCA9IHNzLmluc2VydFNoZWV0KG5hbWUpOwogICAgc2hlZXQuYXBwZW5kUm93KGhlYWRlcnMpOwogICAgc2hlZXQuc2V0RnJvemVuUm93cygxKTsKICB9CiAgcmV0dXJuIHNoZWV0Owp9CgovKioKICogUmVmb3JtYXRzIGEgc2luZ2xlIGNlbGwgdmFsdWUgZm9yIEpTT04gb3V0cHV0LiBTaGVldHMgc2lsZW50bHkKICogY29udmVydHMgc3RyaW5ncyB0eXBlZCBpbnRvIFRpbWUvRGF0ZS10eXBlZCBjZWxscyAob3IgYXV0by1kZXRlY3RlZAogKiBhcyBzdWNoKSBpbnRvIGl0cyBvd24gaW50ZXJuYWwgZGF0ZSB2YWx1ZSwgYW5jaG9yZWQgdG8gaXRzIGVwb2NoCiAqIGRhdGUgKERlYyAzMCwgMTg5OSkgZm9yIHRpbWUtb25seSB2YWx1ZXMuIEFwcHMgU2NyaXB0IHJlYWRzIHRoYXQKICogYmFjayBhcyBhIGZ1bGwgSlMgRGF0ZSwgYW5kIEpTT04uc3RyaW5naWZ5KCkgYWx3YXlzIHJlbmRlcnMgRGF0ZQogKiBvYmplY3RzIGluIFVUQyDigJQgd2hpY2ggaXMgd2hhdCBjYXVzZWQgJzQ6MDAnIElTVCB0byBjb21lIG91dCBhcwogKiAnLi4uVDIyOjMwOjAwLjAwMFonIHRoZSBkYXkgYmVmb3JlLgogKgogKiBGaXg6IG5ldmVyIGxldCBhIHJhdyBEYXRlIHJlYWNoIEpTT04uc3RyaW5naWZ5LiBSZWZvcm1hdCBpdCBiYWNrIHRvCiAqIGEgcGxhaW4gc3RyaW5nLCBpbiB0aGUgc3ByZWFkc2hlZXQncyBvd24gdGltZXpvbmUsIHNoYXBlZCB0byB3aGF0CiAqIHRoZSBjb2x1bW4gYWN0dWFsbHkgcmVwcmVzZW50cyAodGltZS1vZi1kYXkgdnMgY2FsZW5kYXIgZGF0ZSB2cwogKiByZWFsIHRpbWVzdGFtcCkuCiAqLwpmdW5jdGlvbiBmb3JtYXRDZWxsVmFsdWUodmFsdWUsIGhlYWRlciwgdHopIHsKICBpZiAoISh2YWx1ZSBpbnN0YW5jZW9mIERhdGUpKSByZXR1cm4gdmFsdWU7CiAgaWYgKGhlYWRlciA9PT0gJ3N0YXJ0VGltZScgfHwgaGVhZGVyID09PSAnZW5kVGltZScpIHsKICAgIHJldHVybiBVdGlsaXRpZXMuZm9ybWF0RGF0ZSh2YWx1ZSwgdHosICdISDptbScpOwogIH0KICBpZiAoaGVhZGVyID09PSAnc3RhcnREYXRlJyB8fCBoZWFkZXIgPT09ICdlbmREYXRlJyB8fCBoZWFkZXIgPT09ICdkYXRlJykgewogICAgcmV0dXJuIFV0aWxpdGllcy5mb3JtYXREYXRlKHZhbHVlLCB0eiwgJ3l5eXktTU0tZGQnKTsKICB9CiAgLy8gRmFsbGJhY2sgZm9yIGFueSBvdGhlciBEYXRlLXR5cGVkIGNvbHVtbiAoZS5nLiB1cGRhdGVkQXQvdGltZXN0YW1wCiAgLy8gY2VsbHMgdGhhdCBnb3QgYXV0by1jb252ZXJ0ZWQpIOKAlCBzdGlsbCBhIHJlYWwgdGltZXN0YW1wLCBqdXN0CiAgLy8gcmVuZGVyZWQgaW4gbG9jYWwgdGltZSBpbnN0ZWFkIG9mIHNpbGVudGx5LXNoaWZ0ZWQgVVRDLgogIHJldHVybiBVdGlsaXRpZXMuZm9ybWF0RGF0ZSh2YWx1ZSwgdHosICJ5eXl5LU1NLWRkJ1QnSEg6bW06c3MuU1NTJ1onIik7Cn0KCmZ1bmN0aW9uIHNoZWV0VG9PYmplY3RzKHNoZWV0KSB7CiAgY29uc3QgdmFsdWVzID0gc2hlZXQuZ2V0RGF0YVJhbmdlKCkuZ2V0VmFsdWVzKCk7CiAgaWYgKHZhbHVlcy5sZW5ndGggPCAyKSByZXR1cm4gW107CiAgY29uc3QgaGVhZGVycyA9IHZhbHVlc1swXTsKICBjb25zdCB0eiA9IGdldFNTKCkuZ2V0U3ByZWFkc2hlZXRUaW1lWm9uZSgpOwogIHJldHVybiB2YWx1ZXMuc2xpY2UoMSkKICAgIC5maWx0ZXIocm93ID0+IHJvdy5zb21lKGNlbGwgPT4gY2VsbCAhPT0gJycgJiYgY2VsbCAhPT0gbnVsbCkpCiAgICAubWFwKHJvdyA9PiB7CiAgICAgIGNvbnN0IG9iaiA9IHt9OwogICAgICBoZWFkZXJzLmZvckVhY2goKGgsIGkpID0+IHsgb2JqW2hdID0gZm9ybWF0Q2VsbFZhbHVlKHJvd1tpXSwgaCwgdHopOyB9KTsKICAgICAgcmV0dXJuIG9iajsKICAgIH0pOwp9CgpmdW5jdGlvbiBmaW5kUm93SW5kZXhCeUlkKHNoZWV0LCBpZENvbE5hbWUsIGlkKSB7CiAgY29uc3QgdmFsdWVzID0gc2hlZXQuZ2V0RGF0YVJhbmdlKCkuZ2V0VmFsdWVzKCk7CiAgY29uc3QgaGVhZGVycyA9IHZhbHVlc1swXTsKICBjb25zdCBpZENvbCA9IGhlYWRlcnMuaW5kZXhPZihpZENvbE5hbWUpOwogIGZvciAobGV0IHIgPSAxOyByIDwgdmFsdWVzLmxlbmd0aDsgcisrKSB7CiAgICBpZiAoU3RyaW5nKHZhbHVlc1tyXVtpZENvbF0pID09PSBTdHJpbmcoaWQpKSByZXR1cm4gciArIDE7IC8vIDEtaW5kZXhlZCBzaGVldCByb3cKICB9CiAgcmV0dXJuIC0xOwp9CgovKioKICogTGlrZSBmaW5kUm93SW5kZXhCeUlkIGJ1dCBtYXRjaGVzIG9uIHR3byBjb2x1bW5zIGF0IG9uY2Ug4oCUIHVzZWQgZm9yCiAqIFRpbWV0YWJsZS9UaW1ldGFibGVMb2cgcm93cyB3aGljaCBhcmUga2V5ZWQgYnkgKGRhdGUsIGJsb2NrKSByYXRoZXIKICogdGhhbiBhIHNpbmdsZSBpZC4gVmFsdWVzIGFyZSBub3JtYWxpemVkIHRocm91Z2ggdGhlIHNhbWUKICogZm9ybWF0Q2VsbFZhbHVlKCkgcGF0aCB1c2VkIGZvciBvdXRwdXQsIHNvIGEgJ2RhdGUnIGNlbGwgdGhhdCBnb3QKICogYXV0by1jb252ZXJ0ZWQgdG8gYSBEYXRlIHR5cGUgYnkgU2hlZXRzIHN0aWxsIGNvbXBhcmVzIGVxdWFsIHRvIHRoZQogKiBwbGFpbiAiWVlZWS1NTS1ERCIgc3RyaW5nIHRoZSBjbGllbnQgc2VuZHMg4oCUIG90aGVyd2lzZSBhIHN0cmljdAogKiA9PT0gYWdhaW5zdCBhIHJhdyBEYXRlIHNpbGVudGx5IGZhaWxzIHRvIG1hdGNoIGFuZCBhcHBlbmRzIGEKICogZHVwbGljYXRlIHJvdyBpbnN0ZWFkIG9mIHVwZGF0aW5nIHRoZSBleGlzdGluZyBvbmUuCiAqLwpmdW5jdGlvbiBmaW5kUm93SW5kZXhCeVR3b0NvbHMoc2hlZXQsIGNvbE5hbWVBLCB2YWx1ZUEsIGNvbE5hbWVCLCB2YWx1ZUIpIHsKICBjb25zdCB2YWx1ZXMgPSBzaGVldC5nZXREYXRhUmFuZ2UoKS5nZXRWYWx1ZXMoKTsKICBjb25zdCBoZWFkZXJzID0gdmFsdWVzWzBdOwogIGNvbnN0IGNvbEEgPSBoZWFkZXJzLmluZGV4T2YoY29sTmFtZUEpOwogIGNvbnN0IGNvbEIgPSBoZWFkZXJzLmluZGV4T2YoY29sTmFtZUIpOwogIGNvbnN0IHR6ID0gZ2V0U1MoKS5nZXRTcHJlYWRzaGVldFRpbWVab25lKCk7CiAgZm9yIChsZXQgciA9IDE7IHIgPCB2YWx1ZXMubGVuZ3RoOyByKyspIHsKICAgIGNvbnN0IGNlbGxBID0gZm9ybWF0Q2VsbFZhbHVlKHZhbHVlc1tyXVtjb2xBXSwgY29sTmFtZUEsIHR6KTsKICAgIGNvbnN0IGNlbGxCID0gZm9ybWF0Q2VsbFZhbHVlKHZhbHVlc1tyXVtjb2xCXSwgY29sTmFtZUIsIHR6KTsKICAgIGlmIChjZWxsQSA9PT0gdmFsdWVBICYmIGNlbGxCID09PSB2YWx1ZUIpIHJldHVybiByICsgMTsKICB9CiAgcmV0dXJuIC0xOwp9CgovKiAtLS0tLS0tLS0tLS0tLS0tIFNjaGVkdWxlIHNlZWQgKGZpcnN0LXJ1biBkZWZhdWx0IGRheSkgLS0tLS0tLS0tLS0tLS0tLSAqLwpjb25zdCBTQ0hFRFVMRV9TRUVEID0gWwogIFsxLCAnbWVkaXRhdGlvbicsICc0OjAwJywgJzU6MDAnLCAnTWVkaXRhdGlvbiwgc3R1ZHksIHBsYW4gdGhlIGRheScsICdNb3JuaW5nJ10sCiAgWzIsICd5b2dhJywgJzU6MDAnLCAnNjowMCcsICdZb2dhIC8gRXhlcmNpc2UnLCAnTW9ybmluZyddLAogIFszLCAnYmF0aCcsICc2OjAwJywgJzc6MDAnLCAnQmF0aCwgZ2V0IHJlYWR5JywgJ01vcm5pbmcnXSwKICBbNCwgJ2JyZWFrZmFzdCcsICc3OjAwJywgJzk6MTUnLCAnQnJlYWtmYXN0LCBmYW1pbHkgdGltZSwgZ2V0IGRhdWdodGVyIHJlYWR5JywgJ01vcm5pbmcnXSwKICBbNSwgJ2Ryb3BvZmYnLCAnOToxNScsICc5OjQ1JywgJ1NjaG9vbCBkcm9wLW9mZiArIGJhY2sgaG9tZScsICdNb3JuaW5nJ10sCiAgWzYsICdjcmVhdGl2ZScsICc5OjQ1JywgJzEwOjE1JywgJ0NyZWF0aXZlICYgc29jaWFsIHBvc3QgZm9yIEFtb3J0cmVlJywgJ01hcmtldGluZyAmIE91dHJlYWNoJ10sCiAgWzcsICdvdXRyZWFjaCcsICcxMDoxNScsICcxMToxNScsICdPdXRyZWFjaCDigJQgMTArIG1lc3NhZ2VzIC8gZW1haWxzJywgJ01hcmtldGluZyAmIE91dHJlYWNoJ10sCiAgWzgsICdjbGllbnR3b3JrMScsICcxMToxNScsICcxMzowMCcsICdDbGllbnQgd29yayAoaWYgYW55KScsICdNYXJrZXRpbmcgJiBPdXRyZWFjaCddLAogIFs5LCAnbHVuY2gnLCAnMTM6MDAnLCAnMTQ6MDAnLCAnTHVuY2gnLCAnQnJlYWsnXSwKICBbMTAsICdkcm9wc2hpcCcsICcxNDowMCcsICcxNTowMCcsICdEcm9wc2hpcHBpbmcgc2V0dXAgLyBtYW5hZ2VtZW50JywgJ0RlZXAgV29yayddLAogIFsxMSwgJ2NvcmV3b3JrJywgJzE1OjAwJywgJzE4OjAwJywgJ0NvcmUgd29yayDigJQgTWljcm9yZWxpYyAvIEFtb3J0cmVlJywgJ0RlZXAgV29yayddLAogIFsxMiwgJ2JyZWFrMicsICcxODowMCcsICcxODoxNScsICdCcmVhayAvIHRlYScsICdMZWFybmluZyddLAogIFsxMywgJ2xlYXJuaW5nJywgJzE4OjE1JywgJzE5OjE1JywgJ1NlbGYtYnJhbmRpbmcgdHJhaW5pbmcgLyBuOG4gYXV0b21hdGlvbicsICdMZWFybmluZyddLAogIFsxNCwgJ2ZhbWlseScsICcxOToxNScsICcyMTowMCcsICdGYW1pbHkgdGltZSArIGRpbm5lcicsICdFdmVuaW5nJ10sCiAgWzE1LCAncGxhbmRheScsICcyMTowMCcsICcyMTozMCcsICJQbGFuIHRvbW9ycm93J3MgdG9wIDMgdGFza3MiLCAnRXZlbmluZyddLAogIFsxNiwgJ3dpbmRkb3duJywgJzIxOjMwJywgJzIzOjAwJywgJ1dpbmQgZG93biwgc2xlZXAgcHJlcCcsICdFdmVuaW5nJ10KXTsKCmZ1bmN0aW9uIGdldE9yU2VlZFNjaGVkdWxlU2hlZXQoKSB7CiAgY29uc3Qgc3MgPSBnZXRTUygpOwogIGNvbnN0IGV4aXN0ZWQgPSAhIXNzLmdldFNoZWV0QnlOYW1lKFNIRUVUX1NDSEVEVUxFKTsKICBjb25zdCBzaGVldCA9IGdldE9yQ3JlYXRlU2hlZXQoU0hFRVRfU0NIRURVTEUsIFsnb3JkZXInLCAnaWQnLCAnc3RhcnRUaW1lJywgJ2VuZFRpbWUnLCAndGl0bGUnLCAnZ3JvdXAnXSk7CiAgaWYgKCFleGlzdGVkKSB7CiAgICBTQ0hFRFVMRV9TRUVELmZvckVhY2gocm93ID0+IHNoZWV0LmFwcGVuZFJvdyhyb3cpKTsKICB9CiAgcmV0dXJuIHNoZWV0Owp9CgovKiAtLS0tLS0tLS0tLS0tLS0tIEhhbmRsZXJzIC0tLS0tLS0tLS0tLS0tLS0gKi8KZnVuY3Rpb24gaGFuZGxlR2V0QWxsKCkgewogIGNvbnN0IHRhc2tzU2hlZXQgPSBnZXRPckNyZWF0ZVNoZWV0KFNIRUVUX1RBU0tTLAogICAgWydpZCcsICdjbGllbnRJZCcsICdkZXNjcmlwdGlvbicsICdzdGFydERhdGUnLCAnZW5kRGF0ZScsICdzdGF0dXMnLCAndG90YWxNaW51dGVzJywgJ3VwZGF0ZWRBdCddKTsKICBjb25zdCB0aW1ldGFibGVTaGVldCA9IGdldE9yQ3JlYXRlU2hlZXQoU0hFRVRfVElNRVRBQkxFLAogICAgWydkYXRlJywgJ2Jsb2NrJywgJ2NvbXBsZXRlZCcsICd1cGRhdGVkQXQnXSk7CiAgY29uc3QgcHJvZmlsZVNoZWV0ID0gZ2V0T3JDcmVhdGVTaGVldChTSEVFVF9QUk9GSUxFLCBbJ25hbWUnLCAndXBkYXRlZEF0J10pOwogIGNvbnN0IHNjaGVkdWxlU2hlZXQgPSBnZXRPclNlZWRTY2hlZHVsZVNoZWV0KCk7CiAgY29uc3QgcmVmbGVjdGlvbnNTaGVldCA9IGdldE9yQ3JlYXRlU2hlZXQoU0hFRVRfUkVGTEVDVElPTlMsCiAgICBbJ3Rhc2tJZCcsICdjbGllbnRJZCcsICdkZXNjcmlwdGlvbicsICdxdWFsaXR5JywgJ2RlbGl2ZXJlZCcsICdibG9ja2VycycsICdmb2xsb3dVcCcsICdjb25maWRlbmNlJywgJ25vdGVzJywgJ3RpbWVzdGFtcCddKTsKICBjb25zdCBjaGVja2luc1NoZWV0ID0gZ2V0T3JDcmVhdGVTaGVldChTSEVFVF9DSEVDS0lOUywKICAgIFsnZGF0ZScsICdibG9jaycsICdibG9ja1RpdGxlJywgJ21vb2QnLCAnb25UcmFjaycsICdmb2N1cycsICdlbmVyZ3knLCAnYmxvY2tlcicsICdub3RlcycsICd0aW1lc3RhbXAnXSk7CgogIGNvbnN0IGNsaWVudFRhc2tzID0gc2hlZXRUb09iamVjdHModGFza3NTaGVldCk7CiAgY29uc3QgdGltZXRhYmxlID0gc2hlZXRUb09iamVjdHModGltZXRhYmxlU2hlZXQpOwogIGNvbnN0IHByb2ZpbGVSb3dzID0gc2hlZXRUb09iamVjdHMocHJvZmlsZVNoZWV0KTsKICBjb25zdCBwcm9maWxlID0gcHJvZmlsZVJvd3MubGVuZ3RoID8gcHJvZmlsZVJvd3NbcHJvZmlsZVJvd3MubGVuZ3RoIC0gMV0gOiB7IG5hbWU6ICdEaW5pJyB9OwogIGNvbnN0IHNjaGVkdWxlID0gc2hlZXRUb09iamVjdHMoc2NoZWR1bGVTaGVldCk7CiAgY29uc3QgcmVmbGVjdGlvbnMgPSBzaGVldFRvT2JqZWN0cyhyZWZsZWN0aW9uc1NoZWV0KTsKICBjb25zdCBjaGVja2lucyA9IHNoZWV0VG9PYmplY3RzKGNoZWNraW5zU2hlZXQpOwoKICByZXR1cm4geyBzdGF0dXM6ICdvaycsIGNsaWVudFRhc2tzLCB0aW1ldGFibGUsIHByb2ZpbGUsIHNjaGVkdWxlLCByZWZsZWN0aW9ucywgY2hlY2tpbnMgfTsKfQoKZnVuY3Rpb24gaGFuZGxlR2V0U2NoZWR1bGUoKSB7CiAgY29uc3Qgc2NoZWR1bGVTaGVldCA9IGdldE9yU2VlZFNjaGVkdWxlU2hlZXQoKTsKICByZXR1cm4geyBzdGF0dXM6ICdvaycsIHNjaGVkdWxlOiBzaGVldFRvT2JqZWN0cyhzY2hlZHVsZVNoZWV0KSB9Owp9CgpmdW5jdGlvbiBoYW5kbGVVcHNlcnRUYXNrKHApIHsKICBjb25zdCBzaGVldCA9IGdldE9yQ3JlYXRlU2hlZXQoU0hFRVRfVEFTS1MsCiAgICBbJ2lkJywgJ2NsaWVudElkJywgJ2Rlc2NyaXB0aW9uJywgJ3N0YXJ0RGF0ZScsICdlbmREYXRlJywgJ3N0YXR1cycsICd0b3RhbE1pbnV0ZXMnLCAndXBkYXRlZEF0J10pOwogIGNvbnN0IG5vdyA9IG5ldyBEYXRlKCkudG9JU09TdHJpbmcoKTsKICBjb25zdCByb3cgPSBbcC5pZCwgcC5jbGllbnRJZCwgcC5kZXNjcmlwdGlvbiwgcC5zdGFydERhdGUsIHAuZW5kRGF0ZSwgcC5zdGF0dXMsIHAudG90YWxNaW51dGVzIHx8IDAsIG5vd107CiAgY29uc3QgZXhpc3RpbmdSb3cgPSBmaW5kUm93SW5kZXhCeUlkKHNoZWV0LCAnaWQnLCBwLmlkKTsKICBpZiAoZXhpc3RpbmdSb3cgPiAwKSB7CiAgICBzaGVldC5nZXRSYW5nZShleGlzdGluZ1JvdywgMSwgMSwgcm93Lmxlbmd0aCkuc2V0VmFsdWVzKFtyb3ddKTsKICB9IGVsc2UgewogICAgc2hlZXQuYXBwZW5kUm93KHJvdyk7CiAgfQogIHJldHVybiB7IHN0YXR1czogJ29rJyB9Owp9CgpmdW5jdGlvbiBoYW5kbGVEZWxldGVUYXNrKHApIHsKICBjb25zdCBzaGVldCA9IGdldE9yQ3JlYXRlU2hlZXQoU0hFRVRfVEFTS1MsCiAgICBbJ2lkJywgJ2NsaWVudElkJywgJ2Rlc2NyaXB0aW9uJywgJ3N0YXJ0RGF0ZScsICdlbmREYXRlJywgJ3N0YXR1cycsICd0b3RhbE1pbnV0ZXMnLCAndXBkYXRlZEF0J10pOwogIGNvbnN0IGV4aXN0aW5nUm93ID0gZmluZFJvd0luZGV4QnlJZChzaGVldCwgJ2lkJywgcC5pZCk7CiAgaWYgKGV4aXN0aW5nUm93ID4gMCkgc2hlZXQuZGVsZXRlUm93KGV4aXN0aW5nUm93KTsKICByZXR1cm4geyBzdGF0dXM6ICdvaycgfTsKfQoKZnVuY3Rpb24gaGFuZGxlVG9nZ2xlQmxvY2socCkgewogIGNvbnN0IHNoZWV0ID0gZ2V0T3JDcmVhdGVTaGVldChTSEVFVF9USU1FVEFCTEUsIFsnZGF0ZScsICdibG9jaycsICdjb21wbGV0ZWQnLCAndXBkYXRlZEF0J10pOwogIGNvbnN0IGZvdW5kUm93ID0gZmluZFJvd0luZGV4QnlUd29Db2xzKHNoZWV0LCAnZGF0ZScsIHAuZGF0ZSwgJ2Jsb2NrJywgcC5ibG9jayk7CiAgY29uc3Qgbm93ID0gbmV3IERhdGUoKS50b0lTT1N0cmluZygpOwogIGNvbnN0IHJvdyA9IFtwLmRhdGUsIHAuYmxvY2ssIHAuY29tcGxldGVkLCBub3ddOwogIGlmIChmb3VuZFJvdyA+IDApIHsKICAgIHNoZWV0LmdldFJhbmdlKGZvdW5kUm93LCAxLCAxLCByb3cubGVuZ3RoKS5zZXRWYWx1ZXMoW3Jvd10pOwogIH0gZWxzZSB7CiAgICBzaGVldC5hcHBlbmRSb3cocm93KTsKICB9CiAgcmV0dXJuIHsgc3RhdHVzOiAnb2snIH07Cn0KCi8qKgogKiBMb2dzIGEgInN3YXAiIOKAlCB3aGF0IHdhcyBhY3R1YWxseSBkb25lIGluc3RlYWQgb2YgdGhlIHBsYW5uZWQgYmxvY2sg4oCUCiAqIGtleWVkIGJ5IChkYXRlLCBibG9jayksIHNhbWUgdXBzZXJ0LWJ5LXR3by1jb2x1bW5zIHBhdHRlcm4gYXMKICogaGFuZGxlVG9nZ2xlQmxvY2suIEFuIGVtcHR5IGFjdHVhbFRpdGxlIG1lYW5zIHRoZSBzd2FwIHdhcyBjbGVhcmVkLgogKi8KZnVuY3Rpb24gaGFuZGxlTG9nT3ZlcnJpZGUocCkgewogIGNvbnN0IHNoZWV0ID0gZ2V0T3JDcmVhdGVTaGVldChTSEVFVF9USU1FVEFCTEVfTE9HLAogICAgWydkYXRlJywgJ2Jsb2NrJywgJ3BsYW5uZWRUaXRsZScsICdhY3R1YWxUaXRsZScsICdjb21wbGV0ZWQnLCAndXBkYXRlZEF0J10pOwogIGNvbnN0IG5vdyA9IG5ldyBEYXRlKCkudG9JU09TdHJpbmcoKTsKICBjb25zdCByb3cgPSBbcC5kYXRlLCBwLmJsb2NrLCBwLnBsYW5uZWRUaXRsZSB8fCAnJywgcC5hY3R1YWxUaXRsZSB8fCAnJywgISFwLmNvbXBsZXRlZCwgbm93XTsKICBjb25zdCBmb3VuZFJvdyA9IGZpbmRSb3dJbmRleEJ5VHdvQ29scyhzaGVldCwgJ2RhdGUnLCBwLmRhdGUsICdibG9jaycsIHAuYmxvY2spOwogIGlmIChmb3VuZFJvdyA+IDApIHsKICAgIHNoZWV0LmdldFJhbmdlKGZvdW5kUm93LCAxLCAxLCByb3cubGVuZ3RoKS5zZXRWYWx1ZXMoW3Jvd10pOwogIH0gZWxzZSB7CiAgICBzaGVldC5hcHBlbmRSb3cocm93KTsKICB9CiAgcmV0dXJuIHsgc3RhdHVzOiAnb2snIH07Cn0KCmZ1bmN0aW9uIGhhbmRsZVNhdmVSZWZsZWN0aW9uKHApIHsKICBjb25zdCBzaGVldCA9IGdldE9yQ3JlYXRlU2hlZXQoU0hFRVRfUkVGTEVDVElPTlMsCiAgICBbJ3Rhc2tJZCcsICdjbGllbnRJZCcsICdkZXNjcmlwdGlvbicsICdxdWFsaXR5JywgJ2RlbGl2ZXJlZCcsICdibG9ja2VycycsICdmb2xsb3dVcCcsICdjb25maWRlbmNlJywgJ25vdGVzJywgJ3RpbWVzdGFtcCddKTsKICBzaGVldC5hcHBlbmRSb3coWwogICAgcC50YXNrSWQsIHAuY2xpZW50SWQsIHAuZGVzY3JpcHRpb24sIHAucXVhbGl0eSwgcC5kZWxpdmVyZWQsCiAgICBwLmJsb2NrZXJzLCBwLmZvbGxvd1VwLCBwLmNvbmZpZGVuY2UsIHAubm90ZXMsIG5ldyBEYXRlKCkudG9JU09TdHJpbmcoKQogIF0pOwogIHJldHVybiB7IHN0YXR1czogJ29rJyB9Owp9CgpmdW5jdGlvbiBoYW5kbGVTYXZlUHJvZmlsZShwKSB7CiAgY29uc3Qgc2hlZXQgPSBnZXRPckNyZWF0ZVNoZWV0KFNIRUVUX1BST0ZJTEUsIFsnbmFtZScsICd1cGRhdGVkQXQnXSk7CiAgc2hlZXQuYXBwZW5kUm93KFtwLm5hbWUsIG5ldyBEYXRlKCkudG9JU09TdHJpbmcoKV0pOwogIHJldHVybiB7IHN0YXR1czogJ29rJyB9Owp9CgovKioKICogTG9ncyBhIDUtbWludXRlIGNoZWNrLWluIOKAlCB0aGUgc2hvcnQgc3VydmV5IHRoYXQgYXV0by1vcGVucyBvbiB0aGUKICogY2xpZW50IHdoZW4gYSB0aW1ldGFibGUgYmxvY2sgaGFzIDUgbWludXRlcyBsZWZ0LiBBcHBlbmRlZCwgbm90CiAqIHVwc2VydGVkLCBzbyBhIGJsb2NrIHZpc2l0ZWQgbXVsdGlwbGUgdGltZXMgYWNyb3NzIGRpZmZlcmVudCBkYXlzCiAqIChvciByZS1hbnN3ZXJlZCB0aGUgc2FtZSBkYXkpIGtlZXBzIGl0cyBmdWxsIGhpc3RvcnkgcmF0aGVyIHRoYW4KICogb3ZlcndyaXRpbmcgdGhlIHByZXZpb3VzIGFuc3dlciDigJQgdW5saWtlIFRhc2tzL1RpbWV0YWJsZSByb3dzLAogKiB3aGljaCByZXByZXNlbnQgY3VycmVudCBzdGF0ZSwgZWFjaCBjaGVjay1pbiBpcyBpdHMgb3duIG1vbWVudCBpbgogKiB0aW1lIHdvcnRoIGtlZXBpbmcuCiAqLwpmdW5jdGlvbiBoYW5kbGVTYXZlQ2hlY2tpbihwKSB7CiAgY29uc3Qgc2hlZXQgPSBnZXRPckNyZWF0ZVNoZWV0KFNIRUVUX0NIRUNLSU5TLAogICAgWydkYXRlJywgJ2Jsb2NrJywgJ2Jsb2NrVGl0bGUnLCAnbW9vZCcsICdvblRyYWNrJywgJ2ZvY3VzJywgJ2VuZXJneScsICdibG9ja2VyJywgJ25vdGVzJywgJ3RpbWVzdGFtcCddKTsKICBzaGVldC5hcHBlbmRSb3coWwogICAgcC5kYXRlLCBwLmJsb2NrLCBwLmJsb2NrVGl0bGUsIHAubW9vZCwgcC5vblRyYWNrLAogICAgcC5mb2N1cywgcC5lbmVyZ3ksIHAuYmxvY2tlciwgcC5ub3RlcywgbmV3IERhdGUoKS50b0lTT1N0cmluZygpCiAgXSk7CiAgcmV0dXJuIHsgc3RhdHVzOiAnb2snIH07Cn0K";
 
         async function maybeShowOnboarding() {
             const settings = await getSettings();
@@ -1158,22 +1320,48 @@
             try {
                 const res = await jsonp(settings.sheetsUrl, { action: 'getAll' });
                 if (res.status !== 'ok') throw new Error(res.message || 'failed');
-                const tasks = (res.clientTasks || []).map(r => ({
-                    id: String(r.id), clientId: r.clientId, description: r.description,
-                    startDate: r.startDate, endDate: r.endDate, status: r.status || 'not-started',
-                    completed: r.status === 'done',
-                    timeLog: r.totalMinutes ? [{ date: todayKey(), minutes: Number(r.totalMinutes) }] : [],
-                    createdAt: r.updatedAt || new Date().toISOString(),
-                    updatedAt: r.updatedAt || new Date().toISOString()
-                }));
+
+                const latestReflectionByTaskId = {};
+                (res.reflections || []).forEach(r => {
+                    const existing = latestReflectionByTaskId[r.taskId];
+                    if (!existing || String(r.timestamp || '') > String(existing.timestamp || '')) latestReflectionByTaskId[r.taskId] = r;
+                });
+
+                const tasks = (res.clientTasks || []).map(r => {
+                    const refl = latestReflectionByTaskId[String(r.id)];
+                    return {
+                        id: String(r.id), clientId: r.clientId, description: r.description,
+                        startDate: r.startDate, endDate: r.endDate, status: r.status || 'not-started',
+                        completed: r.status === 'done',
+                        timeLog: r.totalMinutes ? [{ date: todayKey(), minutes: Number(r.totalMinutes) }] : [],
+                        reflection: refl ? {
+                            quality: refl.quality, delivered: refl.delivered, blockers: refl.blockers,
+                            followUp: refl.followUp, confidence: refl.confidence, notes: refl.notes
+                        } : undefined,
+                        createdAt: r.updatedAt || new Date().toISOString(),
+                        updatedAt: r.updatedAt || new Date().toISOString()
+                    };
+                });
                 tasksCache = tasks;
                 await persistTasksCache();
+
                 const byDate = {};
                 (res.timetable || []).forEach(r => {
                     if (!byDate[r.date]) byDate[r.date] = {};
                     byDate[r.date][r.block] = String(r.completed) === 'true';
                 });
                 for (const date in byDate) { await setStore('timetable:' + date, byDate[date]); }
+
+                const checkinsByDate = {};
+                (res.checkins || []).forEach(r => {
+                    if (!checkinsByDate[r.date]) checkinsByDate[r.date] = {};
+                    checkinsByDate[r.date][r.block] = {
+                        mood: r.mood, onTrack: r.onTrack, focus: r.focus,
+                        energy: r.energy, blocker: r.blocker, notes: r.notes
+                    };
+                });
+                for (const date in checkinsByDate) { await setStore('checkins:' + date, checkinsByDate[date]); }
+
                 await renderTimetable(); await renderClientTasks();
                 showToast('Restored from Sheets');
             } catch (e) { showToast('Restore failed — check your Sheets URL'); }
@@ -1235,6 +1423,79 @@
                 if (changed) await setStore('timetable:' + date, progress);
             }
         }
+
+        /**
+         * Reflections are append-only in the Sheet (one row per time a task
+         * was reflected on) but stored locally as a single latest snapshot
+         * per task (t.reflection). Collapses remote rows down to the
+         * newest one per taskId, then — same "fill gaps, never overwrite"
+         * rule as mergeTasksFromRemote — only adopts it if this device
+         * doesn't already have a reflection for that task locally. This is
+         * what makes the desktop History panel actually complete across
+         * devices instead of only showing whatever was reflected on THIS
+         * device.
+         */
+        async function mergeReflectionsFromRemote(remoteRows) {
+            const latestByTaskId = {};
+            remoteRows.forEach(r => {
+                const existing = latestByTaskId[r.taskId];
+                if (!existing || String(r.timestamp || '') > String(existing.timestamp || '')) latestByTaskId[r.taskId] = r;
+            });
+            const tasks = await loadTasksCache();
+            let changed = false;
+            tasks.forEach(t => {
+                const r = latestByTaskId[t.id];
+                if (!r || t.reflection) return;
+                t.reflection = {
+                    quality: r.quality, delivered: r.delivered, blockers: r.blockers,
+                    followUp: r.followUp, confidence: r.confidence, notes: r.notes
+                };
+                changed = true;
+            });
+            if (changed) { tasksCache = tasks; await persistTasksCache(); }
+        }
+
+        /**
+         * Same fill-gaps pattern as mergeTimetableFromRemote, applied to
+         * checkins:YYYY-MM-DD — only adds a block's check-in if this
+         * device doesn't already have one recorded for that date+block.
+         */
+        async function mergeCheckinsFromRemote(remoteRows) {
+            const byDate = {};
+            remoteRows.forEach(r => { (byDate[r.date] = byDate[r.date] || []).push(r); });
+            for (const date in byDate) {
+                const local = await getStore('checkins:' + date, {});
+                let changed = false;
+                byDate[date].forEach(r => {
+                    if (!(r.block in local)) {
+                        local[r.block] = {
+                            mood: r.mood, onTrack: r.onTrack, focus: r.focus,
+                            energy: r.energy, blocker: r.blocker, notes: r.notes
+                        };
+                        changed = true;
+                    }
+                });
+                if (changed) await setStore('checkins:' + date, local);
+            }
+        }
+
+        /**
+         * Same fill-gaps rule as everything else here. Note this one was
+         * previously missing entirely — handleGetAll() has always
+         * returned a profile object, but nothing on the client ever read
+         * res.profile, so name/photo never actually synced down. Only
+         * photoUrl (not an uploaded photo's base64 blob) is meaningful to
+         * pull here — uploaded photos are deliberately local-only.
+         */
+        async function mergeProfileFromRemote(remoteProfile) {
+            if (!remoteProfile) return;
+            const local = await getStore('profile', { name: 'Dini', photo: null });
+            let changed = false;
+            if (!local.name && remoteProfile.name) { local.name = remoteProfile.name; changed = true; }
+            if (!local.photo && remoteProfile.photoUrl) { local.photo = remoteProfile.photoUrl; local.photoIsUrl = true; changed = true; }
+            if (changed) await setStore('profile', local);
+        }
+
         async function autoMergeFromSheets() {
             const settings = await getSettings();
             if (!settings.sheetsUrl) return;
@@ -1243,6 +1504,9 @@
                 if (res.status !== 'ok') return;
                 await mergeTasksFromRemote(res.clientTasks || []);
                 await mergeTimetableFromRemote(res.timetable || []);
+                await mergeReflectionsFromRemote(res.reflections || []);
+                await mergeCheckinsFromRemote(res.checkins || []);
+                await mergeProfileFromRemote(res.profile);
             } catch (e) {
                 // offline or unreachable — silently keep the local cache as-is,
                 // same graceful fallback pattern used by initSchedule()
@@ -1353,25 +1617,74 @@
            open. This runs alongside (not instead of) the existing
            alarmTick() loop, which still handles sound/vibration/opening
            the check-in survey while the app IS in the foreground. */
+        /* ================= Celebration bursts =================
+           Fires from the exact point tapped — a checkbox or a status
+           pill — using GSAP for a genuine radial confetti burst rather
+           than a flat fade: particles pop in with an overshoot ease,
+           fan outward at randomized angles/distances/rotations, then
+           arc downward and fade like they're actually falling. Appended
+           to <body> with position:fixed computed from getBoundingClientRect
+           so it works regardless of which scroll container the trigger
+           element sits in. */
+        function celebrateBurst(originEl, emojis, count) {
+            if (!originEl || typeof gsap === 'undefined') return;
+            const rect = originEl.getBoundingClientRect();
+            const originX = rect.left + rect.width / 2;
+            const originY = rect.top + rect.height / 2;
+            const particles = [];
+            for (let i = 0; i < count; i++) {
+                const span = document.createElement('span');
+                span.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                span.style.cssText = `position:fixed; left:${originX}px; top:${originY}px; font-size:${15 + Math.random() * 11}px; line-height:1; pointer-events:none; z-index:9999; will-change:transform,opacity;`;
+                document.body.appendChild(span);
+                particles.push(span);
+            }
+            particles.forEach((span, i) => {
+                const angle = (Math.PI * 2 * i) / particles.length + (Math.random() - 0.5) * 0.7;
+                const distance = 46 + Math.random() * 54;
+                const dx = Math.cos(angle) * distance;
+                const dy = Math.sin(angle) * distance - 18;
+                gsap.set(span, { scale: 0, opacity: 0, rotation: 0, xPercent: -50, yPercent: -50 });
+                gsap.timeline({ onComplete: () => span.remove() })
+                    .to(span, { scale: 1.15, opacity: 1, duration: 0.22, ease: 'back.out(2.6)', delay: i * 0.018 })
+                    .to(span, { x: dx, y: dy, rotation: (Math.random() - 0.5) * 150, duration: 0.5, ease: 'power2.out' }, '<')
+                    .to(span, { y: dy + 46, opacity: 0, duration: 0.42, ease: 'power1.in' }, '-=0.12');
+            });
+            if (navigator.vibrate) navigator.vibrate(count > 6 ? [14, 40, 14] : 12);
+        }
+        function celebrateBlockDone(el) {
+            celebrateBurst(el, ['✨', '⚡', '💪', '🎯', '🔥'], 6);
+        }
+        function celebrateTaskDone(el) {
+            celebrateBurst(el, ['🎉', '🥳', '✨', '🚀', '⭐', '🙌'], 11);
+            const card = el.closest('[data-task]');
+            if (card && typeof gsap !== 'undefined') {
+                const inkRgb = getComputedStyle(document.documentElement).getPropertyValue('--ink-rgb').trim();
+                gsap.fromTo(card,
+                    { boxShadow: `0 0 0 0 rgba(${inkRgb}, 0)` },
+                    { boxShadow: `0 0 0 2px rgba(${inkRgb}, 0.35)`, duration: 0.32, yoyo: true, repeat: 1, ease: 'power2.inOut' });
+            }
+        }
         function isNativePlatform() {
             return typeof window !== 'undefined' && window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function' && window.Capacitor.isNativePlatform();
         }
         /**
          * Android 15+/16 render the WebView edge-to-edge under the status
-         * and navigation bars with no opt-out — this app's own dark
-         * background is what's actually behind those bars now, so their
-         * icons need to be styled to contrast against it (they otherwise
-         * default to a style meant for a light background and can render
-         * near-invisible). Confusingly, in this API "DARK" means "light
-         * icons for a dark background" (it names the resulting style, not
-         * the icon color) — this is the exact enum from @capacitor/core's
-         * own type definitions, not a guess.
+         * and navigation bars with no opt-out — this app's background is
+         * what's actually behind those bars now, so their icons need to
+         * contrast against whichever theme is active (they otherwise
+         * default to a style meant for the opposite background and can
+         * render near-invisible). Confusingly, in this API "DARK" means
+         * "light icons for a dark background" and "LIGHT" means "dark
+         * icons for a light background" (it names the resulting style,
+         * not the icon color) — this is the exact enum from
+         * @capacitor/core's own type definitions, not a guess.
          */
-        async function styleSystemBarsForDarkTheme() {
+        async function styleSystemBarsForTheme(theme) {
             if (!isNativePlatform()) return;
             const SystemBars = window.Capacitor.Plugins && window.Capacitor.Plugins.SystemBars;
             if (!SystemBars) return;
-            try { await SystemBars.setStyle({ style: 'DARK' }); }
+            try { await SystemBars.setStyle({ style: theme === 'light' ? 'LIGHT' : 'DARK' }); }
             catch (e) { console.error('SystemBars styling failed', e); }
         }
         function hashToNotifId(str) {
@@ -1524,6 +1837,7 @@
                     prog[blockId] = !prog[blockId];
                     await setStore('timetable:' + todayKey(), prog);
                     gsap.fromTo(btn, { scale: 0.7 }, { scale: 1, duration: 0.35, ease: 'back.out(2)' });
+                    if (prog[blockId]) celebrateBlockDone(btn);
                     sheetsCall('toggleBlock', { date: todayKey(), block: blockId, completed: prog[blockId] });
                     renderTimetable();
                 });
@@ -1653,11 +1967,11 @@
       <div class="glass rounded-2xl p-4">
         <div class="flex items-center justify-between mb-3">
           <button id="calPrevMonth" class="glass rounded-full w-8 h-8 flex items-center justify-center active:scale-90 transition-transform">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f5f5f3" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
           <p class="font-display text-sm font-medium">${base.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</p>
           <button id="calNextMonth" class="glass rounded-full w-8 h-8 flex items-center justify-center active:scale-90 transition-transform ${desktopCalOffset >= 0 ? 'opacity-30 pointer-events-none' : ''}">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f5f5f3" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
           </button>
         </div>
         <div class="cal-grid">${cellsHtml}</div>
@@ -1753,17 +2067,17 @@
             return (today >= startDate && today <= endDate) ? 'in-progress' : 'not-started';
         }
         const ICONS = {
-            check: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f5f5f3" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>',
-            calendar: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f5f5f3" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
-            alert: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f5f5f3" stroke-width="2" stroke-linecap="round"><path d="M12 9v4M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>',
-            clock: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f5f5f3" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
-            edit: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f5f5f3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
-            trash: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f5f5f3" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6"/></svg>',
-            reflection: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f5f5f3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
-            checkin: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f5f5f3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
-            moodGreat: '<svg width="11" height="11" viewBox="0 0 24 24" fill="#f5f5f3" stroke="none"><circle cx="12" cy="12" r="10"/></svg>',
-            moodOkay: '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#f5f5f3" stroke-width="2"><circle cx="12" cy="12" r="9" stroke-dasharray="14 8"/></svg>',
-            moodLow: '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#f5f5f3" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>'
+            check: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>',
+            calendar: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
+            alert: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 9v4M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>',
+            clock: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+            edit: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
+            trash: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6"/></svg>',
+            reflection: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+            checkin: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
+            moodGreat: '<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="12" r="10"/></svg>',
+            moodOkay: '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9" stroke-dasharray="14 8"/></svg>',
+            moodLow: '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>'
         };
         function moodIconFor(value) {
             const v = (value || '').toLowerCase();
@@ -1799,7 +2113,7 @@
                 return;
             }
 
-            let listHtml = '';
+            let listHtml = '<div class="client-tasks-grid">';
             sorted.forEach(task => {
                 const status = taskStatus(task);
                 const totalMin = taskTotalMinutes(task);
@@ -1812,7 +2126,7 @@
         </div>
         <div class="relative task-menu-wrap shrink-0">
           <button class="task-menu-btn glass rounded-full w-8 h-8 flex items-center justify-center active:scale-90 transition-transform" data-id="${task.id}">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="#f5f5f3"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
           </button>
           <div class="task-menu hidden absolute right-0 top-9 z-20 glass-strong rounded-xl w-28 overflow-hidden">
             <button class="edit-task w-full text-left px-3 py-2.5 text-xs flex items-center gap-2" data-id="${task.id}">${ICONS.edit} Edit</button>
@@ -1830,6 +2144,7 @@
       </div>
     </div>`;
             });
+            listHtml += '</div>';
 
             container.innerHTML = statsHtml + listHtml;
 
@@ -1845,6 +2160,7 @@
                     await persistTasksCache();
                     sheetsCall('upsertTask', { id: t.id, clientId: t.clientId, description: t.description, startDate: t.startDate, endDate: t.endDate, status: next, totalMinutes: taskTotalMinutes(t) });
                     gsap.fromTo(btn, { scale: 0.9 }, { scale: 1, duration: 0.3, ease: 'back.out(2)' });
+                    if (next === 'done') celebrateTaskDone(btn);
                     renderClientTasks();
                     if (next === 'done') openReflection(t);
                 });
@@ -2271,29 +2587,97 @@
                 const filled = d.pct >= 60;
                 return `
     <div class="glass rounded-2xl py-4 flex flex-col items-center gap-1.5">
-      <div class="w-11 h-11 rounded-full flex items-center justify-center font-mono text-[11px] ${filled ? 'bg-[#f5f5f3] text-black' : 'border border-white/20'}">${d.pct}%</div>
+      <div class="w-11 h-11 rounded-full flex items-center justify-center font-mono text-[11px] ${filled ? 'bg-[var(--ink)] text-[var(--bg)]' : 'border border-white/20'}">${d.pct}%</div>
       <span class="text-[9.5px] font-mono" style="color:var(--ink-dimmer)">${label}</span>
     </div>`;
             }).join('');
 
             container.innerHTML = `
-    <div class="flex flex-col items-center justify-center" style="min-height:34vh">
-      <input type="file" id="photoInput" accept="image/*" class="hidden">
-      <button id="avatarBtn" class="w-28 h-28 rounded-full glass-strong flex items-center justify-center overflow-hidden mb-3 active:scale-95 transition-transform">
-        ${profile.photo ? `<img id="avatarImg" class="w-full h-full object-cover" src="${profile.photo}">` : `<span class="font-display text-3xl">${initial}</span>`}
-      </button>
-      <h2 class="font-display text-xl font-semibold">${profile.name || 'Dini'}</h2>
-      <p class="text-xs mt-1" style="color:var(--ink-dimmer)">Tap photo to change · ${computeStreak(weekData)}-day streak</p>
+    <div class="profile-grid">
+      <div class="glass rounded-2xl profile-card overflow-hidden">
+        <input type="file" id="photoInput" accept="image/*" class="hidden">
+        <div class="profile-photo-tilt" id="profilePhotoTilt">
+          <div class="profile-photo-shine"></div>
+          <button id="avatarBtn" class="profile-photo-btn">
+            ${profile.photo ? `<img id="avatarImg" class="profile-photo-img" src="${profile.photo}">` : `<span class="font-display text-5xl">${initial}</span>`}
+          </button>
+        </div>
+        <div class="px-4 py-4">
+          <h2 class="font-display text-base font-semibold">${profile.name || 'Dini'}</h2>
+          <p class="text-[11px] mt-0.5 mb-2.5" style="color:var(--ink-dimmer)">${computeStreak(weekData)}-day streak · tap photo to change</p>
+          <button id="togglePhotoUrlBtn" class="text-[11px] font-mono underline underline-offset-2" style="color:var(--ink-dim)">Use a photo URL instead</button>
+          <div id="photoUrlRow" class="hidden mt-2.5 flex gap-2">
+            <input id="photoUrlInput" type="text" placeholder="https://example.com/photo.jpg"
+              class="flex-1 min-w-0 bg-transparent border-b border-white/15 focus:border-white/50 outline-none py-2 text-xs font-mono placeholder:text-white/25">
+            <button id="savePhotoUrlBtn" class="quick-log-btn px-3 shrink-0">Save</button>
+          </div>
+        </div>
+      </div>
+      <div class="profile-stats-col">
+        <p class="text-[11px] uppercase tracking-[0.18em] font-mono mb-2.5" style="color:var(--ink-dimmer)">Last 9 days</p>
+        <div class="grid grid-cols-3 gap-2.5">${grid}</div>
+        <button id="openMonthReportBtn" class="w-full mt-5 glass rounded-2xl py-3 text-xs font-mono">View month report</button>
+        <p class="text-[10px] mt-4 text-center" style="color:var(--ink-dimmer)">Uploaded photos stay on this device. A photo URL is small enough to sync via Sheets instead.</p>
+      </div>
     </div>
-    <p class="text-[11px] uppercase tracking-[0.18em] font-mono mt-6 mb-2.5" style="color:var(--ink-dimmer)">Last 9 days</p>
-    <div class="grid grid-cols-3 gap-2.5">${grid}</div>
-    <button id="openMonthReportBtn" class="w-full mt-5 glass rounded-2xl py-3 text-xs font-mono">View month report</button>
-    <p class="text-[10px] mt-4 text-center" style="color:var(--ink-dimmer)">Photos stay on this device — Sheets syncs your name and stats only.</p>
   `;
 
             document.getElementById('avatarBtn').addEventListener('click', () => document.getElementById('photoInput').click());
             document.getElementById('photoInput').addEventListener('change', handlePhotoUpload);
             document.getElementById('openMonthReportBtn').addEventListener('click', openMonthReport);
+            document.getElementById('togglePhotoUrlBtn').addEventListener('click', () => {
+                document.getElementById('photoUrlRow').classList.toggle('hidden');
+            });
+            document.getElementById('savePhotoUrlBtn').addEventListener('click', savePhotoUrl);
+            initProfilePhotoTilt();
+        }
+
+        /**
+         * 3D tilt + shine on the profile hero photo — tracks the pointer
+         * across the photo, rotating it slightly toward the cursor (GSAP,
+         * eased) while a radial-gradient shine follows the same position.
+         * Guarded to mouse-type pointers only: on touch, "tilt" would mean
+         * "briefly jerk toward wherever you tapped, then snap back," which
+         * reads as broken rather than glossy — touch just gets the static
+         * photo and its normal tap-to-change behavior.
+         */
+        function initProfilePhotoTilt() {
+            const tilt = document.getElementById('profilePhotoTilt');
+            const btn = document.getElementById('avatarBtn');
+            if (!tilt || !btn || typeof gsap === 'undefined') return;
+            tilt.addEventListener('pointermove', (e) => {
+                if (e.pointerType && e.pointerType !== 'mouse') return;
+                const rect = tilt.getBoundingClientRect();
+                const px = (e.clientX - rect.left) / rect.width;
+                const py = (e.clientY - rect.top) / rect.height;
+                gsap.to(btn, { rotateX: (0.5 - py) * 16, rotateY: (px - 0.5) * 16, transformPerspective: 900, duration: 0.35, ease: 'power2.out' });
+                tilt.style.setProperty('--mx', (px * 100) + '%');
+                tilt.style.setProperty('--my', (py * 100) + '%');
+                tilt.classList.add('shine-active');
+            });
+            tilt.addEventListener('pointerleave', (e) => {
+                if (e.pointerType && e.pointerType !== 'mouse') return;
+                gsap.to(btn, { rotateX: 0, rotateY: 0, duration: 0.5, ease: 'power3.out' });
+                tilt.classList.remove('shine-active');
+            });
+        }
+
+        /**
+         * A pasted photo URL is a few dozen bytes — unlike an uploaded
+         * photo (a few-hundred-KB base64 blob, deliberately kept local
+         * only) — so it's cheap enough to actually push to the Profile
+         * sheet and sync across devices via the normal saveProfile action.
+         */
+        async function savePhotoUrl() {
+            const input = document.getElementById('photoUrlInput');
+            const url = input.value.trim();
+            if (!url) return;
+            const profile = await getStore('profile', { name: 'Dini', photo: null });
+            profile.photo = url;
+            profile.photoIsUrl = true;
+            await setStore('profile', profile);
+            sheetsCall('saveProfile', { name: profile.name || 'Dini', photoUrl: url });
+            renderProfile();
         }
         function handlePhotoUpload(e) {
             const file = e.target.files[0];
@@ -2314,6 +2698,7 @@
             const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
             const profile = await getStore('profile', { name: 'Dini', photo: null });
             profile.photo = dataUrl;
+            profile.photoIsUrl = false;
             await setStore('profile', profile);
             sheetsCall('saveProfile', { name: profile.name || 'Dini' });
             renderProfile();
@@ -2406,7 +2791,7 @@
             buttons.forEach((btn, idx) => {
                 btn.addEventListener('click', () => {
                     buttons.forEach(b => b.style.color = 'var(--ink-dim)');
-                    btn.style.color = '#f5f5f3';
+                    btn.style.color = 'var(--ink)';
                     gsap.to(indicator, { xPercent: idx * 100, duration: 0.4, ease: 'power3.out' });
                     const targetKey = btn.dataset.tab;
                     const current = Object.values(views).find(v => !v.classList.contains('hidden'));
@@ -2421,7 +2806,7 @@
                     });
                 });
             });
-            buttons[0].style.color = '#f5f5f3';
+            buttons[0].style.color = 'var(--ink)';
         }
 
         /* ================= Settings ================= */
@@ -2444,11 +2829,11 @@
 
         /* ================= Init ================= */
         document.addEventListener('DOMContentLoaded', async () => {
+            await initTheme();
             initBlobs();
             initTabs();
             document.getElementById('dateLabel').textContent = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
             await maybeShowOnboarding();
-            await styleSystemBarsForDarkTheme();
 
             await initSchedule();
             await scheduleNativeAlarms();
@@ -2504,6 +2889,9 @@
             document.getElementById('onboardingTestBtn').addEventListener('click', testAndContinueOnboarding);
             document.getElementById('onboardingSkipBtn').addEventListener('click', skipOnboarding);
 
+            document.querySelectorAll('.theme-option').forEach(btn => {
+                btn.addEventListener('click', () => setTheme(btn.dataset.themeChoice));
+            });
             document.getElementById('settingsBtn').addEventListener('click', openSettings);
             document.getElementById('settingsClose').addEventListener('click', closeSettings);
             document.getElementById('retrySyncBtn').addEventListener('click', retryQueue);
