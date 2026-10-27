@@ -1,0 +1,2961 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#050505" id="metaThemeColor">
+    <link rel="apple-touch-icon"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Crect width='180' height='180' fill='%23050505'/%3E%3Ctext x='50%25' y='60%25' font-size='90' font-family='Georgia' fill='%23f5f5f3' text-anchor='middle'%3ED%3C/text%3E%3C/svg%3E">
+    <title>Amortree Flow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #050505;
+            --glass-bg: rgba(255, 255, 255, 0.055);
+            --glass-bg-strong: rgba(255, 255, 255, 0.09);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --ink: #f5f5f3;
+            --ink-dim: rgba(245, 245, 243, 0.55);
+            --ink-dimmer: rgba(245, 245, 243, 0.32);
+            --blob-color: rgba(255, 255, 255, 0.14);
+            --ink-rgb: 245, 245, 243;
+        }
+
+        /* Light theme — same variables, everything built on them (cards,
+           borders, text, the blob background gradients) repaints
+           automatically. Toggled via data-theme="light" on <html>. */
+        [data-theme="light"] {
+            --bg: #f5f4f0;
+            --glass-bg: rgba(5, 5, 5, 0.045);
+            --glass-bg-strong: rgba(5, 5, 5, 0.075);
+            --glass-border: rgba(5, 5, 5, 0.12);
+            --ink: #16130f;
+            --ink-dim: rgba(22, 19, 15, 0.6);
+            --ink-dimmer: rgba(22, 19, 15, 0.38);
+            --blob-color: rgba(5, 5, 5, 0.05);
+            --ink-rgb: 22, 19, 15;
+        }
+
+        /* These Tailwind utility classes (input underlines, placeholders,
+           progress-bar tracks) are used ~35 times across every form/modal
+           in the app with hardcoded white-based opacity — overriding the
+           classes themselves here covers all of them at once, current and
+           future, rather than editing every individual occurrence. */
+        [data-theme="light"] .border-white\/15,
+        [data-theme="light"] .focus\:border-white\/50:focus,
+        [data-theme="light"] .border-white\/20 {
+            border-color: rgba(var(--ink-rgb), 0.2) !important;
+        }
+
+        [data-theme="light"] .bg-white\/10 {
+            background-color: rgba(var(--ink-rgb), 0.1) !important;
+        }
+
+        [data-theme="light"] .text-white\/50 {
+            color: rgba(var(--ink-rgb), 0.5) !important;
+        }
+
+        [data-theme="light"] .placeholder\:text-white\/25::placeholder {
+            color: rgba(var(--ink-rgb), 0.35) !important;
+        }
+
+        [data-theme="light"] input,
+        [data-theme="light"] textarea {
+            color: var(--ink);
+        }
+
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html,
+        body {
+            background: var(--bg);
+            color: var(--ink);
+            overscroll-behavior: none;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            padding-top: env(safe-area-inset-top, 0px);
+        }
+
+        /* Guaranteed centering for the app shell, independent of whether the
+           Tailwind CDN's runtime JIT has generated max-w-md/mx-auto yet — a
+           plain CSS rule always applies, so the layout can never render
+           un-centered while those utility classes are still being compiled.
+           height: 100% (not min-height/100vh) so this fills exactly the
+           space body has left after its safe-area padding, with its own
+           overflow hidden — <main> below is the only element that scrolls,
+           so the header and tab bar stay visually fixed in place. */
+        .app-shell {
+            width: 100%;
+            max-width: 28rem;
+            margin-left: auto;
+            margin-right: auto;
+            height: 100%;
+            overflow: hidden;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+
+        .onboarding-shell {
+            width: 100%;
+            max-width: 28rem;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .font-display {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        /* The only scrolling element in the whole app shell — header and
+           tab bar are ordinary flex siblings above it with flex-shrink:0,
+           so they never scroll out of view; only this scrolls. */
+        main {
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+        }
+
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .blob-field {
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .blob {
+            position: absolute;
+            border-radius: 9999px;
+            filter: blur(60px);
+            background: radial-gradient(circle at 30% 30%, var(--blob-color), rgba(var(--ink-rgb), 0) 70%);
+        }
+
+        .glass {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(20px) saturate(120%);
+            -webkit-backdrop-filter: blur(20px) saturate(120%);
+        }
+
+        .glass-strong {
+            background: var(--glass-bg-strong);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(24px) saturate(130%);
+            -webkit-backdrop-filter: blur(24px) saturate(130%);
+        }
+
+        ::-webkit-scrollbar {
+            width: 0px;
+            height: 0px;
+        }
+
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            opacity: 0.6;
+            cursor: pointer;
+        }
+
+        .tab-underline {
+            transition: transform .35s cubic-bezier(.65, 0, .35, 1);
+        }
+
+        .checkbox-ring {
+            width: 22px;
+            height: 22px;
+            border-radius: 9999px;
+            border: 1.5px solid rgba(var(--ink-rgb), 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all .25s ease;
+            flex-shrink: 0;
+        }
+
+        .checkbox-ring.done {
+            background: var(--ink);
+            border-color: var(--ink);
+        }
+
+        .checkbox-ring.done svg {
+            stroke: var(--bg);
+        }
+
+        .task-card.now {
+            border-color: rgba(var(--ink-rgb), 0.4);
+            box-shadow: 0 0 0 1px rgba(var(--ink-rgb), 0.15), 0 8px 30px rgba(var(--ink-rgb), 0.06);
+        }
+
+        .now-badge {
+            font-size: 9px;
+            letter-spacing: 0.12em;
+            padding: 2px 7px;
+            border-radius: 9999px;
+            background: var(--ink);
+            color: var(--bg);
+            font-weight: 600;
+        }
+
+        .pulse-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 9999px;
+            background: var(--ink);
+            animation: pulse 1.6s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.25;
+            }
+        }
+
+        .quick-log-btn {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10.5px;
+            padding: 5px 9px;
+            border-radius: 9999px;
+            border: 1px solid var(--glass-border);
+            color: var(--ink-dim);
+        }
+
+        .quick-log-btn:active {
+            transform: scale(0.92);
+        }
+
+        .week-bar {
+            width: 100%;
+            border-radius: 6px 6px 3px 3px;
+            background: rgba(var(--ink-rgb), 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .week-bar-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--ink);
+            border-radius: 6px 6px 3px 3px;
+        }
+
+        #toastWrap {
+            transition: opacity .2s ease;
+        }
+
+        #syncDot {
+            box-shadow: 0 0 0 2px var(--bg);
+        }
+
+        .status-option,
+        .theme-option {
+            transition: all .2s ease;
+            border-color: var(--glass-border);
+            color: var(--ink-dim);
+        }
+
+        .status-option.active,
+        .theme-option.active {
+            background: var(--ink);
+            color: var(--bg);
+            border-color: var(--ink);
+        }
+
+        /* ---- Profile hero photo: large, tappable, tilts toward the
+           cursor on desktop with a glossy shine that tracks the pointer.
+           Touch devices just get the static photo (see JS pointerType
+           guard) — a fake tilt driven by taps would feel broken, not fun. ---- */
+        .profile-photo-tilt {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            max-height: 420px;
+            perspective: 900px;
+            cursor: pointer;
+        }
+
+        .profile-photo-btn {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--glass-bg-strong);
+            transform-style: preserve-3d;
+            will-change: transform;
+            border: none;
+            padding: 0;
+        }
+
+        .profile-photo-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* Deliberately NOT theme-aware — a glossy highlight is a light
+           reflection, a physical-material effect, not a UI color choice,
+           so it stays a soft white sweep in both themes. */
+        .profile-photo-shine {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            pointer-events: none;
+            opacity: 0;
+            background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(255, 255, 255, 0.38), transparent 45%);
+            transition: opacity .25s ease;
+        }
+
+        .profile-photo-tilt.shine-active .profile-photo-shine {
+            opacity: 1;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            border-radius: 9999px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            border: 1px solid var(--glass-border);
+            color: var(--ink-dim);
+        }
+
+        .status-pill.is-done {
+            background: var(--ink);
+            color: var(--bg);
+            border-color: var(--ink);
+        }
+
+        .status-pill.is-overdue {
+            border-color: rgba(var(--ink-rgb), 0.45);
+            color: var(--ink);
+        }
+
+        .reflection-choice.active {
+            background: var(--glass-bg-strong);
+            border-color: rgba(var(--ink-rgb), 0.4);
+        }
+
+        .override-task-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 14px;
+            border: 1px solid var(--glass-border);
+            text-align: left;
+            transition: all .2s ease;
+            width: 100%;
+        }
+
+        .override-task-row.active {
+            background: var(--glass-bg-strong);
+            border-color: rgba(var(--ink-rgb), 0.4);
+        }
+
+        .override-task-label {
+            font-size: 12.5px;
+            line-height: 1.3;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .override-task-hours {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: var(--ink-dimmer);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .override-task-row.active .override-task-hours {
+            color: var(--ink);
+        }
+
+        /* ---- Desktop/tablet split layout (Timetable tab only) ----
+           Mobile stays exactly as it was: single column, calendar panel
+           hidden. At >=900px, #view-timetable becomes a two-pane grid —
+           left is the existing today's-blocks list unchanged, right is
+           the new inline month calendar + Reflections/Checkins history,
+           replacing the old modal-only Month Report for this tab. */
+        .desktop-cal-panel {
+            display: none;
+        }
+
+        .client-tasks-grid {
+            display: block;
+        }
+
+        .profile-grid {
+            display: block;
+        }
+
+        .profile-card {
+            margin-bottom: 24px;
+        }
+
+        @media (min-width: 900px) {
+            .app-shell {
+                max-width: 1280px;
+                padding-left: 32px;
+                padding-right: 32px;
+            }
+
+            #view-timetable:not(.hidden) {
+                display: grid;
+                grid-template-columns: minmax(280px, 30%) 1fr;
+                align-items: start;
+                gap: 32px;
+            }
+
+            .desktop-cal-panel {
+                display: block;
+            }
+
+            .client-tasks-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                gap: 14px;
+                align-items: start;
+            }
+
+            .client-tasks-grid>div {
+                margin-bottom: 0;
+            }
+
+            .profile-grid {
+                display: grid;
+                grid-template-columns: 300px 1fr;
+                gap: 28px;
+                align-items: start;
+            }
+
+            .profile-card {
+                margin-bottom: 0;
+            }
+        }
+
+        .cal-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+        }
+
+        .cal-weekday {
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9.5px;
+            color: var(--ink-dimmer);
+            padding-bottom: 4px;
+        }
+
+        .cal-day {
+            aspect-ratio: 1;
+            border-radius: 10px;
+            border: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            cursor: pointer;
+            transition: all .15s ease;
+            position: relative;
+            background: rgba(var(--ink-rgb), 0.02);
+        }
+
+        .cal-day:hover {
+            background: var(--glass-bg);
+        }
+
+        .cal-day.is-today {
+            border-color: rgba(var(--ink-rgb), 0.45);
+        }
+
+        .cal-day.is-selected {
+            background: var(--glass-bg-strong);
+            border-color: var(--ink);
+        }
+
+        .cal-day.is-empty {
+            border: none;
+            cursor: default;
+            background: none;
+        }
+
+        .cal-day-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--ink-dim);
+        }
+
+        .cal-day-bar {
+            width: 60%;
+            height: 3px;
+            border-radius: 2px;
+            background: rgba(var(--ink-rgb), 0.1);
+            overflow: hidden;
+        }
+
+        .cal-day-bar-fill {
+            height: 100%;
+            background: var(--ink);
+        }
+
+        .cal-day-dot {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 5px;
+            height: 5px;
+            border-radius: 9999px;
+            background: var(--ink);
+            opacity: 0.7;
+        }
+
+        .history-card {
+            border: 1px solid var(--glass-border);
+            border-radius: 14px;
+            padding: 12px 14px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: background .15s ease;
+        }
+
+        .history-card:hover {
+            background: rgba(var(--ink-rgb), 0.03);
+        }
+
+        .history-card-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            background: var(--glass-bg-strong);
+        }
+
+        .history-qa-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 5px 0;
+            border-top: 1px solid var(--glass-border);
+            font-size: 11.5px;
+        }
+
+        .history-qa-row:first-child {
+            border-top: none;
+        }
+
+        .edit-block-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .swapped-tag {
+            font-size: 9px;
+            letter-spacing: 0.08em;
+            padding: 2px 7px;
+            border-radius: 9999px;
+            border: 1px solid var(--glass-border);
+            color: var(--ink-dim);
+            text-transform: uppercase;
+        }
+
+        /* ---- Month report grid ---- */
+        .report-scroll {
+            overflow-x: auto;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 14px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .report-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: max-content;
+        }
+
+        .report-table th,
+        .report-table td {
+            border-bottom: 1px solid var(--glass-border);
+            border-right: 1px solid var(--glass-border);
+            text-align: center;
+        }
+
+        .report-rowhead,
+        .report-rowhead-header {
+            position: sticky;
+            left: 0;
+            z-index: 2;
+            background: #0b0b0b;
+            text-align: left;
+            padding: 7px 10px;
+            font-size: 10.5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 138px;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--ink-dim);
+            border-right: 1px solid var(--glass-border);
+        }
+
+        .report-rowhead-header {
+            z-index: 3;
+            color: var(--ink-dimmer);
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            font-size: 9px;
+        }
+
+        .report-daynum {
+            width: 28px;
+            min-width: 28px;
+            padding: 7px 2px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9.5px;
+            color: var(--ink-dimmer);
+            background: #0b0b0b;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .report-daynum.is-today {
+            color: var(--ink);
+            font-weight: 600;
+        }
+
+        .report-rowhead-header {
+            position: sticky;
+            top: 0;
+        }
+
+        .report-cell {
+            width: 28px;
+            min-width: 28px;
+            height: 28px;
+        }
+
+        .report-check {
+            color: var(--ink);
+            font-weight: 700;
+            font-size: 12px;
+        }
+
+        .report-time {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 8.5px;
+            color: var(--ink-dim);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen relative">
+
+    <!-- Onboarding — forced on first launch since there is no shared
+         backend anymore. Gated on settings.onboardingDone, not on
+         sheetsUrl presence, so choosing "skip" doesn't re-trigger this
+         on every launch. -->
+    <div id="onboardingOverlay" class="fixed inset-0 z-50 hidden flex-col" style="background:var(--bg)">
+        <div class="onboarding-shell w-full mx-auto h-full overflow-y-auto px-5 py-8 flex flex-col">
+            <h1 class="font-display text-2xl font-semibold mb-1">Set up your Google Sheet</h1>
+            <p class="text-xs mb-6" style="color:var(--ink-dim)">Your data syncs to a private Google Sheet that only
+                you control — nobody else can see it. Takes about 3 minutes, once.</p>
+
+            <div class="glass rounded-2xl p-4 mb-3">
+                <p class="text-[11px] uppercase tracking-wider font-mono mb-2" style="color:var(--ink-dimmer)">Step 1
+                </p>
+                <p class="text-sm">Create a new Google Sheet at <span class="font-mono">sheets.google.com</span>,
+                    then open <span class="font-mono">Extensions → Apps Script</span>.</p>
+            </div>
+            <div class="glass rounded-2xl p-4 mb-3">
+                <p class="text-[11px] uppercase tracking-wider font-mono mb-2" style="color:var(--ink-dimmer)">Step 2
+                </p>
+                <p class="text-sm mb-3">Delete the starter code, then paste in the backend script.</p>
+                <button id="copyBackendScriptBtn" class="w-full glass rounded-xl py-2.5 text-xs font-mono">Copy
+                    backend script</button>
+            </div>
+            <div class="glass rounded-2xl p-4 mb-3">
+                <p class="text-[11px] uppercase tracking-wider font-mono mb-2" style="color:var(--ink-dimmer)">Step 3
+                </p>
+                <p class="text-sm">Click <span class="font-mono">Deploy → New deployment → Web app</span>. Set
+                    <span class="font-mono">Execute as: Me</span> and <span class="font-mono">Who has access:
+                        Anyone</span>, then Deploy. Copy the URL it gives you.</p>
+            </div>
+            <div class="glass rounded-2xl p-4 mb-4">
+                <p class="text-[11px] uppercase tracking-wider font-mono mb-2" style="color:var(--ink-dimmer)">Step 4
+                </p>
+                <p class="text-sm mb-3">Paste that URL here:</p>
+                <input id="onboardingUrlInput" type="text" placeholder="https://script.google.com/macros/s/.../exec"
+                    class="w-full bg-transparent border-b border-white/15 focus:border-white/50 outline-none py-2 text-xs font-mono placeholder:text-white/25">
+            </div>
+            <p id="onboardingError" class="hidden text-[11px] mb-3" style="color:var(--ink-dim)"></p>
+            <button id="onboardingTestBtn"
+                class="w-full bg-[var(--ink)] text-[var(--bg)] font-display font-semibold rounded-2xl py-3.5 text-sm active:scale-[0.98] transition-transform mb-3">Test
+                connection & continue</button>
+            <button id="onboardingSkipBtn" class="w-full glass rounded-2xl py-3 text-xs font-mono mb-2">Skip — use
+                this device only (no sync)</button>
+            <p class="text-[10px] text-center" style="color:var(--ink-dimmer)">You can always set this up later from
+                Settings.</p>
+        </div>
+    </div>
+
+    <div class="blob-field" id="blobField"></div>
+
+    <div class="app-shell relative z-10 flex flex-col pt-6">
+
+        <header class="flex items-center justify-between mb-5 shrink-0">
+            <div>
+                <p class="text-[11px] tracking-[0.2em] uppercase font-mono" style="color:var(--ink-dimmer)"
+                    id="dateLabel">—</p>
+                <h1 class="font-display text-2xl font-semibold tracking-tight">Dini</h1>
+            </div>
+            <button id="settingsBtn"
+                class="glass rounded-full w-11 h-11 flex items-center justify-center active:scale-90 transition-transform relative">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                    <circle cx="12" cy="12" r="3" />
+                    <path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
+                <span id="syncDot" class="hidden absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-white"></span>
+            </button>
+        </header>
+
+        <div class="glass rounded-2xl p-1 flex relative mb-5 shrink-0">
+            <div id="tabIndicator"
+                class="absolute top-1 bottom-1 left-1 w-[calc(33.333%-4px)] rounded-xl glass-strong tab-underline">
+            </div>
+            <button data-tab="timetable"
+                class="tab-btn flex-1 py-2.5 text-xs font-medium relative z-10 font-display">Timetable</button>
+            <button data-tab="clients" class="tab-btn flex-1 py-2.5 text-xs font-medium relative z-10 font-display"
+                style="color:var(--ink-dim)">Client Tasks</button>
+            <button data-tab="profile" class="tab-btn flex-1 py-2.5 text-xs font-medium relative z-10 font-display"
+                style="color:var(--ink-dim)">Profile</button>
+        </div>
+
+        <main class="flex-1 pb-32">
+            <div id="view-timetable"></div>
+            <div id="view-clients" class="hidden"></div>
+            <div id="view-profile" class="hidden"></div>
+        </main>
+
+        <button id="fabAdd"
+            class="hidden absolute bottom-8 right-4 z-20 glass-strong rounded-full w-16 h-16 items-center justify-center shadow-2xl active:scale-90 transition-transform">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round">
+                <path d="M12 5v14M5 12h14" />
+            </svg>
+        </button>
+    </div>
+
+    <!-- Toast (undo) -->
+    <div id="toastWrap" class="hidden fixed bottom-8 left-1/2 -translate-x-1/2 z-40">
+        <div id="toast" class="glass-strong rounded-2xl px-4 py-3 flex items-center gap-4">
+            <span id="toastMsg" class="text-xs" style="color:var(--ink-dim)">Task deleted</span>
+            <button id="toastUndo" class="text-xs font-mono font-semibold underline underline-offset-2">Undo</button>
+        </div>
+    </div>
+
+    <!-- Add / Edit Task Modal -->
+    <div id="modalOverlay"
+        class="fixed inset-0 z-30 hidden items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm px-4 pb-4">
+        <div id="modalCard" class="glass-strong rounded-3xl w-full max-w-sm p-6">
+            <div class="flex items-start justify-between mb-5">
+                <div>
+                    <h2 id="modalTitle" class="font-display text-lg font-semibold">New client task</h2>
+                    <p class="text-xs mt-0.5" style="color:var(--ink-dimmer)">Log the work, set the dates, track it
+                        through to done.</p>
+                </div>
+                <button id="modalClose"
+                    class="w-8 h-8 rounded-full flex items-center justify-center glass shrink-0"><svg width="14"
+                        height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12" />
+                    </svg></button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[11px] uppercase tracking-wider font-mono" style="color:var(--ink-dimmer)">Client
+                        ID</label>
+                    <input id="inputClientId" type="text" placeholder="e.g. CL-014 or client name"
+                        class="w-full mt-1.5 bg-transparent border-b border-white/15 focus:border-white/50 outline-none py-2 font-mono text-sm placeholder:text-white/25">
+                </div>
+                <div>
+                    <label class="text-[11px] uppercase tracking-wider font-mono" style="color:var(--ink-dimmer)">Task
+                        description</label>
+                    <textarea id="inputDescription" rows="2" placeholder="What needs doing?"
+                        class="w-full mt-1.5 bg-transparent border-b border-white/15 focus:border-white/50 outline-none py-2 text-sm resize-none placeholder:text-white/25"></textarea>
+                </div>
+                <div class="flex gap-3">
+                    <div class="flex-1">
+                        <label class="text-[11px] uppercase tracking-wider font-mono"
+                            style="color:var(--ink-dimmer)">Start date</label>
+                        <input id="inputStart" type="date"
+                            class="w-full mt-1.5 bg-transparent border-b border-white/15 focus:border-white/50 outline-none py-2 text-sm font-mono">
+                    </div>
+                    <div class="flex-1">
+                        <label class="text-[11px] uppercase tracking-wider font-mono"
+                            style="color:var(--ink-dimmer)">End date</label>
+                        <input id="inputEnd" type="date"
+                            class="w-full mt-1.5 bg-transparent border-b border-white/15 focus:border-white/50 outline-none py-2 text-sm font-mono">
+                    </div>
+                </div>
+                <div id="statusSection" class="hidden">
+                    <label class="text-[11px] uppercase tracking-wider font-mono"
+                        style="color:var(--ink-dimmer)">Status</label>
+                    <div class="flex gap-2 mt-1.5">
+                        <button type="button" data-status="not-started"
+                            class="status-option flex-1 py-2.5 rounded-xl text-[11px] font-mono border">Not
+                            started</button>
+                        <button type="button" data-status="in-progress"
+                            class="status-option flex-1 py-2.5 rounded-xl text-[11px] font-mono border">In
+                            progress</button>
+                        <button type="button" data-status="done"
+                            class="status-option flex-1 py-2.5 rounded-xl text-[11px] font-mono border">Completed</button>
+                    </div>
+                </div>
+            </div>
+            <button id="saveTaskBtn"
+                class="w-full mt-6 bg-[var(--ink)] text-[var(--bg)] font-display font-semibold rounded-2xl py-3.5 text-sm active:scale-[0.98] transition-transform">Save
+                task</button>
+            <p id="modalError" class="hidden text-[11px] text-white/50 mt-2 text-center"></p>
+        </div>
+    </div>
+
+    <!-- Reflection wizard -->
+    <div id="reflectionOverlay"
+        class="fixed inset-0 z-30 hidden items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm px-4 pb-4">
+        <div class="glass-strong rounded-3xl w-full max-w-sm p-6 overflow-hidden">
+            <div class="flex items-center justify-between mb-1">
+                <h2 class="font-display text-lg font-semibold">Quick reflection</h2>
+                <button id="reflectionClose" class="w-8 h-8 rounded-full flex items-center justify-center glass"><svg
+                        width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12" />
+                    </svg></button>
+            </div>
+            <p class="text-xs mb-3" style="color:var(--ink-dimmer)">Totally optional — helps you spot patterns later.
+            </p>
+            <div class="w-full h-1 rounded-full bg-white/10 mb-5 overflow-hidden">
+                <div id="reflectionProgress" class="h-full bg-white transition-all duration-300" style="width:16%">
+                </div>
+            </div>
+            <div id="reflectionBody" class="min-h-[150px]"></div>
+            <button id="reflectionNextBtn" class="w-full mt-6 glass rounded-2xl py-3 text-sm font-mono">Skip</button>
+        </div>
+    </div>
+
+    <!-- 5-minute check-in (auto-opens from the alarm) -->
+    <div id="checkinOverlay"
+        class="fixed inset-0 z-30 hidden items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm px-4 pb-4">
+        <div class="glass-strong rounded-3xl w-full max-w-sm p-6 overflow-hidden">
+            <div class="flex items-center justify-between mb-1">
+                <div>
+                    <h2 class="font-display text-lg font-semibold">5 minutes left</h2>
+                    <p id="checkinBlockTitle" class="text-xs mt-0.5" style="color:var(--ink-dimmer)">—</p>
+                </div>
+                <button id="checkinClose" class="w-8 h-8 rounded-full flex items-center justify-center glass shrink-0"><svg
+                        width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12" />
+                    </svg></button>
+            </div>
+            <div class="w-full h-1 rounded-full bg-white/10 mb-5 mt-3 overflow-hidden">
+                <div id="checkinProgress" class="h-full bg-white transition-all duration-300" style="width:16%"></div>
+            </div>
+            <div id="checkinBody" class="min-h-[150px]"></div>
+            <button id="checkinNextBtn" class="w-full mt-6 glass rounded-2xl py-3 text-sm font-mono">Skip</button>
+        </div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div id="settingsOverlay"
+        class="fixed inset-0 z-30 hidden items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm px-4 pb-4 overflow-y-auto">
+        <div class="glass-strong rounded-3xl w-full max-w-sm p-6 my-auto">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="font-display text-lg font-semibold">Settings</h2>
+                <button id="settingsClose" class="w-8 h-8 rounded-full flex items-center justify-center glass"><svg
+                        width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12" />
+                    </svg></button>
+            </div>
+
+            <p class="text-[11px] uppercase tracking-wider font-mono mb-2" style="color:var(--ink-dimmer)">Appearance
+            </p>
+            <div class="flex gap-2 mb-6">
+                <button type="button" data-theme-choice="dark"
+                    class="theme-option flex-1 py-2.5 rounded-xl text-[11px] font-mono border">Dark</button>
+                <button type="button" data-theme-choice="light"
+                    class="theme-option flex-1 py-2.5 rounded-xl text-[11px] font-mono border">Light</button>
+            </div>
+
+            <p class="text-[11px] uppercase tracking-wider font-mono mb-2" style="color:var(--ink-dimmer)">Google Sheets
+            </p>
+            <p class="text-xs leading-relaxed mb-3" style="color:var(--ink-dim)">Paste your Apps Script Web App URL.
+                Sheets becomes your durable backend — tasks, timetable, and reflections all sync there.</p>
+            <input id="inputSheetsUrl" type="text" placeholder="https://script.google.com/macros/s/..."
+                class="w-full bg-transparent border-b border-white/15 focus:border-white/50 outline-none py-2 text-xs font-mono placeholder:text-white/25">
+            <div class="glass rounded-2xl px-4 py-3 mt-3 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium" id="syncStatusText">All synced</p>
+                    <p class="text-[10px] mt-0.5" style="color:var(--ink-dimmer)" id="syncStatusSub">No pending items
+                    </p>
+                </div>
+                <button id="retrySyncBtn" class="quick-log-btn">Retry now</button>
+            </div>
+            <button id="restoreBtn" class="w-full mt-2 glass rounded-2xl py-2.5 text-xs font-mono">Restore from
+                Sheets</button>
+
+            <p class="text-[11px] uppercase tracking-wider font-mono mb-2 mt-6" style="color:var(--ink-dimmer)">
+                Timetable schedule</p>
+            <p class="text-xs leading-relaxed mb-3" style="color:var(--ink-dim)">Your daily blocks now live in a
+                "Schedule" tab in the same Sheet. Edit, reorder, add, or rename rows there — then refresh here to pull
+                the changes in.</p>
+            <div class="glass rounded-2xl px-4 py-3 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium" id="scheduleSyncedText">Never synced</p>
+                    <p class="text-[10px] mt-0.5" style="color:var(--ink-dimmer)">Local copy is used if the Sheet is
+                        unreachable</p>
+                </div>
+                <button id="refreshScheduleBtn" class="quick-log-btn">Refresh</button>
+            </div>
+
+            <p class="text-[11px] uppercase tracking-wider font-mono mb-2 mt-6" style="color:var(--ink-dimmer)">Alarms
+            </p>
+            <p class="text-xs leading-relaxed mb-3" style="color:var(--ink-dim)">A 5-minute warning plays before each
+                timetable block ends — only while this page stays open in your browser. Paste your own audio link for a
+                custom track, or leave blank for a built-in tone.</p>
+            <input id="inputAlarmUrl" type="text" placeholder="Optional: link to your own alarm sound"
+                class="w-full bg-transparent border-b border-white/15 focus:border-white/50 outline-none py-2 text-xs font-mono placeholder:text-white/25 mb-3">
+            <button id="enableAlarmsBtn" class="w-full glass rounded-2xl py-2.5 text-xs font-mono">Enable alarms for
+                this session</button>
+
+            <div class="flex gap-3 mt-6">
+                <button id="resetDayBtn"
+                    class="flex-1 glass rounded-2xl py-3 text-xs font-mono active:scale-95 transition-transform">Reset
+                    today</button>
+                <button id="saveSettingsBtn"
+                    class="flex-1 bg-[var(--ink)] text-[var(--bg)] font-display font-semibold rounded-2xl py-3 text-sm active:scale-95 transition-transform">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Log Time Modal -->
+    <div id="logTimeOverlay"
+        class="fixed inset-0 z-30 hidden items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm px-4 pb-4">
+        <div class="glass-strong rounded-3xl w-full max-w-sm p-6">
+            <div class="flex items-center justify-between mb-1">
+                <h2 class="font-display text-lg font-semibold">Log time</h2>
+                <button id="logTimeClose" class="w-8 h-8 rounded-full flex items-center justify-center glass"><svg
+                        width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12" />
+                    </svg></button>
+            </div>
+            <p id="logTimeTotal" class="text-xs mb-4" style="color:var(--ink-dim)">0m logged so far</p>
+            <div class="flex gap-2 mb-4">
+                <button class="log-time-quick quick-log-btn flex-1 py-2.5" data-min="15">+15m</button>
+                <button class="log-time-quick quick-log-btn flex-1 py-2.5" data-min="30">+30m</button>
+                <button class="log-time-quick quick-log-btn flex-1 py-2.5" data-min="60">+1h</button>
+            </div>
+            <div class="flex gap-2">
+                <input id="customMinutesInput" type="number" min="1" placeholder="Custom minutes"
+                    class="flex-1 bg-transparent border-b border-white/15 focus:border-white/50 outline-none py-2 text-sm font-mono placeholder:text-white/25">
+                <button id="addCustomMinutesBtn" class="quick-log-btn px-4">Add</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Swap / Override Modal -->
+    <div id="overrideOverlay"
+        class="fixed inset-0 z-30 hidden items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm px-4 pb-4">
+        <div class="glass-strong rounded-3xl w-full max-w-sm p-6 flex flex-col" style="max-height:85vh">
+            <div class="flex items-center justify-between mb-1 shrink-0">
+                <h2 class="font-display text-lg font-semibold">What did you actually do?</h2>
+                <button id="overrideClose"
+                    class="w-8 h-8 rounded-full flex items-center justify-center glass shrink-0"><svg width="14"
+                        height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12" />
+                    </svg></button>
+            </div>
+            <div class="overflow-y-auto" style="flex:1">
+                <p id="overridePlanned" class="text-xs mb-1" style="color:var(--ink-dimmer)">Planned: —</p>
+                <p id="overrideBlockDuration" class="text-[11px] font-mono mb-4" style="color:var(--ink-dimmer)"></p>
+
+                <p class="text-[11px] uppercase tracking-wider font-mono mb-2" style="color:var(--ink-dimmer)">Link a
+                    client task <span style="color:var(--ink-dimmer)">(optional)</span></p>
+                <p class="text-[11px] leading-relaxed mb-2.5" style="color:var(--ink-dimmer)">Tap a task to log this
+                    block's full duration against it. Tap again to unlink.</p>
+                <div id="overrideTaskList" class="flex flex-col gap-2 mb-4"></div>
+
+                <textarea id="overrideInput" rows="2" placeholder="What you actually worked on..."
+                    class="w-full bg-transparent border-b border-white/15 focus:border-white/50 outline-none py-2 text-sm resize-none placeholder:text-white/25"></textarea>
+            </div>
+            <div class="flex gap-3 mt-6 shrink-0">
+                <button id="clearOverrideBtn"
+                    class="flex-1 glass rounded-2xl py-3 text-xs font-mono active:scale-95 transition-transform">Clear
+                    swap</button>
+                <button id="saveOverrideBtn"
+                    class="flex-1 bg-[var(--ink)] text-[var(--bg)] font-display font-semibold rounded-2xl py-3 text-sm active:scale-95 transition-transform">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Month Report Modal -->
+    <div id="monthReportOverlay"
+        class="fixed inset-0 z-30 hidden items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm px-4 pb-4">
+        <div class="glass-strong rounded-3xl w-full max-w-lg p-6 flex flex-col" style="max-height:85vh">
+            <div class="flex items-center justify-between mb-1 shrink-0">
+                <h2 class="font-display text-lg font-semibold">Month report</h2>
+                <button id="monthReportClose"
+                    class="w-8 h-8 rounded-full flex items-center justify-center glass shrink-0"><svg width="14"
+                        height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12" />
+                    </svg></button>
+            </div>
+            <div class="flex items-center justify-between mt-3 mb-4 shrink-0">
+                <button id="reportPrevMonth"
+                    class="glass rounded-full w-9 h-9 flex items-center justify-center active:scale-90 transition-transform">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 18l-6-6 6-6" />
+                    </svg>
+                </button>
+                <p id="reportMonthLabel" class="font-display text-sm font-medium">—</p>
+                <button id="reportNextMonth"
+                    class="glass rounded-full w-9 h-9 flex items-center justify-center active:scale-90 transition-transform">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 18l6-6-6-6" />
+                    </svg>
+                </button>
+            </div>
+            <div id="reportBody" class="overflow-y-auto pr-0.5" style="flex:1">
+                <p class="text-[11px] uppercase tracking-[0.18em] font-mono mb-2" style="color:var(--ink-dimmer)">
+                    Daily schedule</p>
+                <div id="reportScheduleWrap" class="report-scroll mb-5"></div>
+                <div id="reportClientSection" class="hidden">
+                    <p class="text-[11px] uppercase tracking-[0.18em] font-mono mb-2" style="color:var(--ink-dimmer)">
+                        Client work — time logged</p>
+                    <div id="reportClientWrap" class="report-scroll"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ================= Backend =================
+           There is NO shared default Sheets URL. Each install must
+           configure its own Google Sheet (forced via the onboarding
+           gate below on first launch). A hardcoded shared URL here
+           previously meant every stranger who skipped setup would
+           silently write their data into the original developer's own
+           spreadsheet — removed entirely, not just hidden, so there's
+           no way to accidentally fall back to it. */
+
+        /* ================= Storage helpers (local cache) =================
+           window.storage only exists inside Claude.ai's own artifact preview
+           sandbox — it is NOT a real browser API. On a page hosted on its
+           own domain or installed as a home-screen PWA (the actual target
+           here, given the Apps Script backend and apple-mobile-web-app
+           meta tags), window.storage is undefined, so every get/set used
+           to throw immediately, get silently caught, and fall back to the
+           empty default — meaning nothing ever actually persisted, which
+           is why the streak and week/9-day grids always read as 0%.
+           Fix: use localStorage as the real, standard, per-device
+           persistent store. window.storage is still tried first and used
+           when present, so this keeps working if the file is ever
+           previewed inside a Claude artifact too. */
+        const LOCAL_PREFIX = 'dini-hub:';
+        function hasArtifactStorage() {
+            return typeof window !== 'undefined' && window.storage && typeof window.storage.get === 'function' && typeof window.storage.set === 'function';
+        }
+        async function getStore(key, fallback) {
+            if (hasArtifactStorage()) {
+                try { const res = await window.storage.get(key, false); return res ? JSON.parse(res.value) : fallback; }
+                catch (e) { /* fall through to localStorage */ }
+            }
+            try {
+                const raw = localStorage.getItem(LOCAL_PREFIX + key);
+                return raw === null ? fallback : JSON.parse(raw);
+            } catch (e) { return fallback; }
+        }
+        async function setStore(key, value) {
+            if (hasArtifactStorage()) {
+                try { await window.storage.set(key, JSON.stringify(value), false); return; }
+                catch (e) { /* fall through to localStorage */ }
+            }
+            try { localStorage.setItem(LOCAL_PREFIX + key, JSON.stringify(value)); }
+            catch (e) { console.error('storage set failed', e); }
+        }
+        async function getSettings() {
+            return await getStore('settings', {});
+        }
+
+        /* ================= Theme ================= */
+        async function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : 'dark');
+            const meta = document.getElementById('metaThemeColor');
+            if (meta) meta.setAttribute('content', theme === 'light' ? '#f5f4f0' : '#050505');
+            document.querySelectorAll('.theme-option').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.themeChoice === (theme === 'light' ? 'light' : 'dark'));
+            });
+            await styleSystemBarsForTheme(theme);
+        }
+        async function initTheme() {
+            const settings = await getSettings();
+            await applyTheme(settings.theme || 'dark');
+        }
+        async function setTheme(theme) {
+            const existing = await getSettings();
+            await setStore('settings', { ...existing, theme });
+            await applyTheme(theme);
+        }
+
+        /* ================= Onboarding =================
+           Forced on first launch since there is no shared backend
+           anymore — gated on settings.onboardingDone (set either after
+           a successful connection test, or after an explicit skip), not
+           on sheetsUrl presence, so "skip" doesn't re-trigger this on
+           every future launch. The backend script is embedded here
+           (base64, to sidestep any quoting issues) purely so a Play
+           Store install has no separate file to hunt down — one button
+           copies it straight to the clipboard for pasting into Apps
+           Script. */
+        const BACKEND_SCRIPT_B64 = "LyoqCiAqIERpbmkg4oCUIEdvb2dsZSBTaGVldHMgYmFja2VuZAogKiAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KICogRGVwbG95IHRoaXMgYXMgYSBXZWIgQXBwIChFeHRlbnNpb25zID4gQXBwcyBTY3JpcHQsIGluIGEgR29vZ2xlIFNoZWV0KToKICogICAxLiBEZXBsb3kgPiBOZXcgZGVwbG95bWVudCA+IHR5cGUgIldlYiBhcHAiCiAqICAgMi4gRXhlY3V0ZSBhczogTWUKICogICAzLiBXaG8gaGFzIGFjY2VzczogQW55b25lCiAqICAgNC4gQ29weSB0aGUgL2V4ZWMgVVJMIGl0IGdpdmVzIHlvdSBhbmQgcGFzdGUgaXQgaW50bwogKiAgICAgIERpbmkncyBTZXR0aW5ncyA+IEdvb2dsZSBTaGVldHMgZmllbGQuCiAqCiAqIE9uIGZpcnN0IGNhbGwgdGhpcyBjcmVhdGVzIHRhYnMgYXV0b21hdGljYWxseToKICogICBUYXNrcywgVGltZXRhYmxlLCBQcm9maWxlLCBSZWZsZWN0aW9ucywgU2NoZWR1bGUsIFRpbWV0YWJsZUxvZywgQ2hlY2tpbnMKICoKICogUmVzcG9uZHMgdG8gSlNPTlAgKGEgPHNjcmlwdD4gdGFnIEdFVCB3aXRoIGEgP2NhbGxiYWNrPSBwYXJhbSkKICogYmVjYXVzZSBBcHBzIFNjcmlwdCBXZWIgQXBwcyBjYW4ndCBiZSByZWFjaGVkIHdpdGggZmV0Y2goKS9DT1JTCiAqIGZyb20gYSBwYWdlIGhvc3RlZCBlbHNld2hlcmUuCiAqCiAqIEVESVQgWU9VUiBEQVk6IGNoYW5nZSB0aGUgIlNjaGVkdWxlIiB0YWIgZGlyZWN0bHkgdG8gY2hhbmdlIHRoZQogKiB0aW1ldGFibGUg4oCUIG5vIHJlZGVwbG95IG5lZWRlZC4gQ29sdW1uczoKICogICBvcmRlciAgICAgIOKAlCBudW1iZXIgY29udHJvbGxpbmcgZGlzcGxheS9ncm91cCBvcmRlcgogKiAgIGlkICAgICAgICAg4oCUIHNob3J0IHN0YWJsZSBzbHVnIChlLmcuICJ5b2dhIikuIFJlbmFtZSB0aXRsZXMvdGltZXMKICogICAgICAgICAgICAgICAgZnJlZWx5LCBidXQga2VlcCBhbiBpZCBzdGFibGUgb25jZSB5b3UndmUgbG9nZ2VkCiAqICAgICAgICAgICAgICAgIGhpc3RvcnkgYWdhaW5zdCBpdCwgb3IgdGhhdCBoaXN0b3J5IHN0b3BzIGxpbmluZyB1cC4KICogICBzdGFydFRpbWUgLyBlbmRUaW1lIOKAlCAyNC1ob3VyICJIOk1NIiBvciAiSEg6TU0iLCBlLmcuICI1OjAwIiwgIjE4OjE1IgogKiAgIHRpdGxlICAgICAg4oCUIHdoYXQgc2hvd3Mgb24gdGhlIGNhcmQKICogICBncm91cCAgICAgIOKAlCBzZWN0aW9uIGhlYWRpbmcgdGhlIGJsb2NrIGlzIHNob3duIHVuZGVyCiAqIFRoZSB0YWIgaXMgc2VlZGVkIHdpdGggdGhlIGN1cnJlbnQgZGVmYXVsdCBkYXkgdGhlIGZpcnN0IHRpbWUgdGhpcwogKiBzY3JpcHQgcnVuczsgYWZ0ZXIgdGhhdCwgdGhlIHNoZWV0IGlzIHRoZSBzb3VyY2Ugb2YgdHJ1dGguCiAqCiAqIElNUE9SVEFOVDogYWZ0ZXIgcGFzdGluZyB0aGlzIHVwZGF0ZSBpbnRvIHRoZSBBcHBzIFNjcmlwdCBlZGl0b3IsCiAqIHlvdSBNVVNUIHJlZGVwbG95IChEZXBsb3kgPiBNYW5hZ2UgZGVwbG95bWVudHMgPiBFZGl0ID4gVmVyc2lvbjogTmV3CiAqID4gRGVwbG95KSBmb3IgdGhlIG5ldyBzYXZlQ2hlY2tpbiBhY3Rpb24gdG8gZ28gbGl2ZS4gU2F2aW5nIHRoZQogKiBzY3JpcHQgYWxvbmUgZG9lcyBub3QgdXBkYXRlIHRoZSBydW5uaW5nIC9leGVjIGVuZHBvaW50LgogKi8KCmNvbnN0IFNIRUVUX1RBU0tTID0gJ1Rhc2tzJzsKY29uc3QgU0hFRVRfVElNRVRBQkxFID0gJ1RpbWV0YWJsZSc7CmNvbnN0IFNIRUVUX1BST0ZJTEUgPSAnUHJvZmlsZSc7CmNvbnN0IFNIRUVUX1JFRkxFQ1RJT05TID0gJ1JlZmxlY3Rpb25zJzsKY29uc3QgU0hFRVRfU0NIRURVTEUgPSAnU2NoZWR1bGUnOwpjb25zdCBTSEVFVF9USU1FVEFCTEVfTE9HID0gJ1RpbWV0YWJsZUxvZyc7CmNvbnN0IFNIRUVUX0NIRUNLSU5TID0gJ0NoZWNraW5zJzsKCmZ1bmN0aW9uIGRvR2V0KGUpIHsKICBjb25zdCBjYWxsYmFjayA9IGUucGFyYW1ldGVyLmNhbGxiYWNrOwogIGNvbnN0IGFjdGlvbiA9IGUucGFyYW1ldGVyLmFjdGlvbjsKICBsZXQgcGF5bG9hZCA9IHt9OwogIHRyeSB7IHBheWxvYWQgPSBKU09OLnBhcnNlKGUucGFyYW1ldGVyLnBheWxvYWQgfHwgJ3t9Jyk7IH0gY2F0Y2ggKGVycikgeyBwYXlsb2FkID0ge307IH0KCiAgbGV0IHJlc3VsdDsKICB0cnkgewogICAgc3dpdGNoIChhY3Rpb24pIHsKICAgICAgY2FzZSAnZ2V0QWxsJzogcmVzdWx0ID0gaGFuZGxlR2V0QWxsKCk7IGJyZWFrOwogICAgICBjYXNlICdnZXRTY2hlZHVsZSc6IHJlc3VsdCA9IGhhbmRsZUdldFNjaGVkdWxlKCk7IGJyZWFrOwogICAgICBjYXNlICd1cHNlcnRUYXNrJzogcmVzdWx0ID0gaGFuZGxlVXBzZXJ0VGFzayhwYXlsb2FkKTsgYnJlYWs7CiAgICAgIGNhc2UgJ2RlbGV0ZVRhc2snOiByZXN1bHQgPSBoYW5kbGVEZWxldGVUYXNrKHBheWxvYWQpOyBicmVhazsKICAgICAgY2FzZSAndG9nZ2xlQmxvY2snOiByZXN1bHQgPSBoYW5kbGVUb2dnbGVCbG9jayhwYXlsb2FkKTsgYnJlYWs7CiAgICAgIGNhc2UgJ2xvZ092ZXJyaWRlJzogcmVzdWx0ID0gaGFuZGxlTG9nT3ZlcnJpZGUocGF5bG9hZCk7IGJyZWFrOwogICAgICBjYXNlICdzYXZlUmVmbGVjdGlvbic6IHJlc3VsdCA9IGhhbmRsZVNhdmVSZWZsZWN0aW9uKHBheWxvYWQpOyBicmVhazsKICAgICAgY2FzZSAnc2F2ZVByb2ZpbGUnOiByZXN1bHQgPSBoYW5kbGVTYXZlUHJvZmlsZShwYXlsb2FkKTsgYnJlYWs7CiAgICAgIGNhc2UgJ3NhdmVDaGVja2luJzogcmVzdWx0ID0gaGFuZGxlU2F2ZUNoZWNraW4ocGF5bG9hZCk7IGJyZWFrOwogICAgICBkZWZhdWx0OiByZXN1bHQgPSB7IHN0YXR1czogJ2Vycm9yJywgbWVzc2FnZTogJ1Vua25vd24gYWN0aW9uOiAnICsgYWN0aW9uIH07CiAgICB9CiAgfSBjYXRjaCAoZXJyKSB7CiAgICByZXN1bHQgPSB7IHN0YXR1czogJ2Vycm9yJywgbWVzc2FnZTogU3RyaW5nKGVycikgfTsKICB9CgogIGNvbnN0IGJvZHkgPSBjYWxsYmFjawogICAgPyBjYWxsYmFjayArICcoJyArIEpTT04uc3RyaW5naWZ5KHJlc3VsdCkgKyAnKScKICAgIDogSlNPTi5zdHJpbmdpZnkocmVzdWx0KTsKICBjb25zdCBtaW1lID0gY2FsbGJhY2sKICAgID8gQ29udGVudFNlcnZpY2UuTWltZVR5cGUuSkFWQVNDUklQVAogICAgOiBDb250ZW50U2VydmljZS5NaW1lVHlwZS5KU09OOwogIHJldHVybiBDb250ZW50U2VydmljZS5jcmVhdGVUZXh0T3V0cHV0KGJvZHkpLnNldE1pbWVUeXBlKG1pbWUpOwp9CgovKiAtLS0tLS0tLS0tLS0tLS0tIFNoZWV0IGhlbHBlcnMgLS0tLS0tLS0tLS0tLS0tLSAqLwpmdW5jdGlvbiBnZXRTUygpIHsgcmV0dXJuIFNwcmVhZHNoZWV0QXBwLmdldEFjdGl2ZVNwcmVhZHNoZWV0KCk7IH0KCmZ1bmN0aW9uIGdldE9yQ3JlYXRlU2hlZXQobmFtZSwgaGVhZGVycykgewogIGNvbnN0IHNzID0gZ2V0U1MoKTsKICBsZXQgc2hlZXQgPSBzcy5nZXRTaGVldEJ5TmFtZShuYW1lKTsKICBpZiAoIXNoZWV0KSB7CiAgICBzaGVldCA9IHNzLmluc2VydFNoZWV0KG5hbWUpOwogICAgc2hlZXQuYXBwZW5kUm93KGhlYWRlcnMpOwogICAgc2hlZXQuc2V0RnJvemVuUm93cygxKTsKICB9CiAgcmV0dXJuIHNoZWV0Owp9CgovKioKICogUmVmb3JtYXRzIGEgc2luZ2xlIGNlbGwgdmFsdWUgZm9yIEpTT04gb3V0cHV0LiBTaGVldHMgc2lsZW50bHkKICogY29udmVydHMgc3RyaW5ncyB0eXBlZCBpbnRvIFRpbWUvRGF0ZS10eXBlZCBjZWxscyAob3IgYXV0by1kZXRlY3RlZAogKiBhcyBzdWNoKSBpbnRvIGl0cyBvd24gaW50ZXJuYWwgZGF0ZSB2YWx1ZSwgYW5jaG9yZWQgdG8gaXRzIGVwb2NoCiAqIGRhdGUgKERlYyAzMCwgMTg5OSkgZm9yIHRpbWUtb25seSB2YWx1ZXMuIEFwcHMgU2NyaXB0IHJlYWRzIHRoYXQKICogYmFjayBhcyBhIGZ1bGwgSlMgRGF0ZSwgYW5kIEpTT04uc3RyaW5naWZ5KCkgYWx3YXlzIHJlbmRlcnMgRGF0ZQogKiBvYmplY3RzIGluIFVUQyDigJQgd2hpY2ggaXMgd2hhdCBjYXVzZWQgJzQ6MDAnIElTVCB0byBjb21lIG91dCBhcwogKiAnLi4uVDIyOjMwOjAwLjAwMFonIHRoZSBkYXkgYmVmb3JlLgogKgogKiBGaXg6IG5ldmVyIGxldCBhIHJhdyBEYXRlIHJlYWNoIEpTT04uc3RyaW5naWZ5LiBSZWZvcm1hdCBpdCBiYWNrIHRvCiAqIGEgcGxhaW4gc3RyaW5nLCBpbiB0aGUgc3ByZWFkc2hlZXQncyBvd24gdGltZXpvbmUsIHNoYXBlZCB0byB3aGF0CiAqIHRoZSBjb2x1bW4gYWN0dWFsbHkgcmVwcmVzZW50cyAodGltZS1vZi1kYXkgdnMgY2FsZW5kYXIgZGF0ZSB2cwogKiByZWFsIHRpbWVzdGFtcCkuCiAqLwpmdW5jdGlvbiBmb3JtYXRDZWxsVmFsdWUodmFsdWUsIGhlYWRlciwgdHopIHsKICBpZiAoISh2YWx1ZSBpbnN0YW5jZW9mIERhdGUpKSByZXR1cm4gdmFsdWU7CiAgaWYgKGhlYWRlciA9PT0gJ3N0YXJ0VGltZScgfHwgaGVhZGVyID09PSAnZW5kVGltZScpIHsKICAgIHJldHVybiBVdGlsaXRpZXMuZm9ybWF0RGF0ZSh2YWx1ZSwgdHosICdISDptbScpOwogIH0KICBpZiAoaGVhZGVyID09PSAnc3RhcnREYXRlJyB8fCBoZWFkZXIgPT09ICdlbmREYXRlJyB8fCBoZWFkZXIgPT09ICdkYXRlJykgewogICAgcmV0dXJuIFV0aWxpdGllcy5mb3JtYXREYXRlKHZhbHVlLCB0eiwgJ3l5eXktTU0tZGQnKTsKICB9CiAgLy8gRmFsbGJhY2sgZm9yIGFueSBvdGhlciBEYXRlLXR5cGVkIGNvbHVtbiAoZS5nLiB1cGRhdGVkQXQvdGltZXN0YW1wCiAgLy8gY2VsbHMgdGhhdCBnb3QgYXV0by1jb252ZXJ0ZWQpIOKAlCBzdGlsbCBhIHJlYWwgdGltZXN0YW1wLCBqdXN0CiAgLy8gcmVuZGVyZWQgaW4gbG9jYWwgdGltZSBpbnN0ZWFkIG9mIHNpbGVudGx5LXNoaWZ0ZWQgVVRDLgogIHJldHVybiBVdGlsaXRpZXMuZm9ybWF0RGF0ZSh2YWx1ZSwgdHosICJ5eXl5LU1NLWRkJ1QnSEg6bW06c3MuU1NTJ1onIik7Cn0KCmZ1bmN0aW9uIHNoZWV0VG9PYmplY3RzKHNoZWV0KSB7CiAgY29uc3QgdmFsdWVzID0gc2hlZXQuZ2V0RGF0YVJhbmdlKCkuZ2V0VmFsdWVzKCk7CiAgaWYgKHZhbHVlcy5sZW5ndGggPCAyKSByZXR1cm4gW107CiAgY29uc3QgaGVhZGVycyA9IHZhbHVlc1swXTsKICBjb25zdCB0eiA9IGdldFNTKCkuZ2V0U3ByZWFkc2hlZXRUaW1lWm9uZSgpOwogIHJldHVybiB2YWx1ZXMuc2xpY2UoMSkKICAgIC5maWx0ZXIocm93ID0+IHJvdy5zb21lKGNlbGwgPT4gY2VsbCAhPT0gJycgJiYgY2VsbCAhPT0gbnVsbCkpCiAgICAubWFwKHJvdyA9PiB7CiAgICAgIGNvbnN0IG9iaiA9IHt9OwogICAgICBoZWFkZXJzLmZvckVhY2goKGgsIGkpID0+IHsgb2JqW2hdID0gZm9ybWF0Q2VsbFZhbHVlKHJvd1tpXSwgaCwgdHopOyB9KTsKICAgICAgcmV0dXJuIG9iajsKICAgIH0pOwp9CgpmdW5jdGlvbiBmaW5kUm93SW5kZXhCeUlkKHNoZWV0LCBpZENvbE5hbWUsIGlkKSB7CiAgY29uc3QgdmFsdWVzID0gc2hlZXQuZ2V0RGF0YVJhbmdlKCkuZ2V0VmFsdWVzKCk7CiAgY29uc3QgaGVhZGVycyA9IHZhbHVlc1swXTsKICBjb25zdCBpZENvbCA9IGhlYWRlcnMuaW5kZXhPZihpZENvbE5hbWUpOwogIGZvciAobGV0IHIgPSAxOyByIDwgdmFsdWVzLmxlbmd0aDsgcisrKSB7CiAgICBpZiAoU3RyaW5nKHZhbHVlc1tyXVtpZENvbF0pID09PSBTdHJpbmcoaWQpKSByZXR1cm4gciArIDE7IC8vIDEtaW5kZXhlZCBzaGVldCByb3cKICB9CiAgcmV0dXJuIC0xOwp9CgovKioKICogTGlrZSBmaW5kUm93SW5kZXhCeUlkIGJ1dCBtYXRjaGVzIG9uIHR3byBjb2x1bW5zIGF0IG9uY2Ug4oCUIHVzZWQgZm9yCiAqIFRpbWV0YWJsZS9UaW1ldGFibGVMb2cgcm93cyB3aGljaCBhcmUga2V5ZWQgYnkgKGRhdGUsIGJsb2NrKSByYXRoZXIKICogdGhhbiBhIHNpbmdsZSBpZC4gVmFsdWVzIGFyZSBub3JtYWxpemVkIHRocm91Z2ggdGhlIHNhbWUKICogZm9ybWF0Q2VsbFZhbHVlKCkgcGF0aCB1c2VkIGZvciBvdXRwdXQsIHNvIGEgJ2RhdGUnIGNlbGwgdGhhdCBnb3QKICogYXV0by1jb252ZXJ0ZWQgdG8gYSBEYXRlIHR5cGUgYnkgU2hlZXRzIHN0aWxsIGNvbXBhcmVzIGVxdWFsIHRvIHRoZQogKiBwbGFpbiAiWVlZWS1NTS1ERCIgc3RyaW5nIHRoZSBjbGllbnQgc2VuZHMg4oCUIG90aGVyd2lzZSBhIHN0cmljdAogKiA9PT0gYWdhaW5zdCBhIHJhdyBEYXRlIHNpbGVudGx5IGZhaWxzIHRvIG1hdGNoIGFuZCBhcHBlbmRzIGEKICogZHVwbGljYXRlIHJvdyBpbnN0ZWFkIG9mIHVwZGF0aW5nIHRoZSBleGlzdGluZyBvbmUuCiAqLwpmdW5jdGlvbiBmaW5kUm93SW5kZXhCeVR3b0NvbHMoc2hlZXQsIGNvbE5hbWVBLCB2YWx1ZUEsIGNvbE5hbWVCLCB2YWx1ZUIpIHsKICBjb25zdCB2YWx1ZXMgPSBzaGVldC5nZXREYXRhUmFuZ2UoKS5nZXRWYWx1ZXMoKTsKICBjb25zdCBoZWFkZXJzID0gdmFsdWVzWzBdOwogIGNvbnN0IGNvbEEgPSBoZWFkZXJzLmluZGV4T2YoY29sTmFtZUEpOwogIGNvbnN0IGNvbEIgPSBoZWFkZXJzLmluZGV4T2YoY29sTmFtZUIpOwogIGNvbnN0IHR6ID0gZ2V0U1MoKS5nZXRTcHJlYWRzaGVldFRpbWVab25lKCk7CiAgZm9yIChsZXQgciA9IDE7IHIgPCB2YWx1ZXMubGVuZ3RoOyByKyspIHsKICAgIGNvbnN0IGNlbGxBID0gZm9ybWF0Q2VsbFZhbHVlKHZhbHVlc1tyXVtjb2xBXSwgY29sTmFtZUEsIHR6KTsKICAgIGNvbnN0IGNlbGxCID0gZm9ybWF0Q2VsbFZhbHVlKHZhbHVlc1tyXVtjb2xCXSwgY29sTmFtZUIsIHR6KTsKICAgIGlmIChjZWxsQSA9PT0gdmFsdWVBICYmIGNlbGxCID09PSB2YWx1ZUIpIHJldHVybiByICsgMTsKICB9CiAgcmV0dXJuIC0xOwp9CgovKiAtLS0tLS0tLS0tLS0tLS0tIFNjaGVkdWxlIHNlZWQgKGZpcnN0LXJ1biBkZWZhdWx0IGRheSkgLS0tLS0tLS0tLS0tLS0tLSAqLwpjb25zdCBTQ0hFRFVMRV9TRUVEID0gWwogIFsxLCAnbWVkaXRhdGlvbicsICc0OjAwJywgJzU6MDAnLCAnTWVkaXRhdGlvbiwgc3R1ZHksIHBsYW4gdGhlIGRheScsICdNb3JuaW5nJ10sCiAgWzIsICd5b2dhJywgJzU6MDAnLCAnNjowMCcsICdZb2dhIC8gRXhlcmNpc2UnLCAnTW9ybmluZyddLAogIFszLCAnYmF0aCcsICc2OjAwJywgJzc6MDAnLCAnQmF0aCwgZ2V0IHJlYWR5JywgJ01vcm5pbmcnXSwKICBbNCwgJ2JyZWFrZmFzdCcsICc3OjAwJywgJzk6MTUnLCAnQnJlYWtmYXN0LCBmYW1pbHkgdGltZSwgZ2V0IGRhdWdodGVyIHJlYWR5JywgJ01vcm5pbmcnXSwKICBbNSwgJ2Ryb3BvZmYnLCAnOToxNScsICc5OjQ1JywgJ1NjaG9vbCBkcm9wLW9mZiArIGJhY2sgaG9tZScsICdNb3JuaW5nJ10sCiAgWzYsICdjcmVhdGl2ZScsICc5OjQ1JywgJzEwOjE1JywgJ0NyZWF0aXZlICYgc29jaWFsIHBvc3QgZm9yIEFtb3J0cmVlJywgJ01hcmtldGluZyAmIE91dHJlYWNoJ10sCiAgWzcsICdvdXRyZWFjaCcsICcxMDoxNScsICcxMToxNScsICdPdXRyZWFjaCDigJQgMTArIG1lc3NhZ2VzIC8gZW1haWxzJywgJ01hcmtldGluZyAmIE91dHJlYWNoJ10sCiAgWzgsICdjbGllbnR3b3JrMScsICcxMToxNScsICcxMzowMCcsICdDbGllbnQgd29yayAoaWYgYW55KScsICdNYXJrZXRpbmcgJiBPdXRyZWFjaCddLAogIFs5LCAnbHVuY2gnLCAnMTM6MDAnLCAnMTQ6MDAnLCAnTHVuY2gnLCAnQnJlYWsnXSwKICBbMTAsICdkcm9wc2hpcCcsICcxNDowMCcsICcxNTowMCcsICdEcm9wc2hpcHBpbmcgc2V0dXAgLyBtYW5hZ2VtZW50JywgJ0RlZXAgV29yayddLAogIFsxMSwgJ2NvcmV3b3JrJywgJzE1OjAwJywgJzE4OjAwJywgJ0NvcmUgd29yayDigJQgTWljcm9yZWxpYyAvIEFtb3J0cmVlJywgJ0RlZXAgV29yayddLAogIFsxMiwgJ2JyZWFrMicsICcxODowMCcsICcxODoxNScsICdCcmVhayAvIHRlYScsICdMZWFybmluZyddLAogIFsxMywgJ2xlYXJuaW5nJywgJzE4OjE1JywgJzE5OjE1JywgJ1NlbGYtYnJhbmRpbmcgdHJhaW5pbmcgLyBuOG4gYXV0b21hdGlvbicsICdMZWFybmluZyddLAogIFsxNCwgJ2ZhbWlseScsICcxOToxNScsICcyMTowMCcsICdGYW1pbHkgdGltZSArIGRpbm5lcicsICdFdmVuaW5nJ10sCiAgWzE1LCAncGxhbmRheScsICcyMTowMCcsICcyMTozMCcsICJQbGFuIHRvbW9ycm93J3MgdG9wIDMgdGFza3MiLCAnRXZlbmluZyddLAogIFsxNiwgJ3dpbmRkb3duJywgJzIxOjMwJywgJzIzOjAwJywgJ1dpbmQgZG93biwgc2xlZXAgcHJlcCcsICdFdmVuaW5nJ10KXTsKCmZ1bmN0aW9uIGdldE9yU2VlZFNjaGVkdWxlU2hlZXQoKSB7CiAgY29uc3Qgc3MgPSBnZXRTUygpOwogIGNvbnN0IGV4aXN0ZWQgPSAhIXNzLmdldFNoZWV0QnlOYW1lKFNIRUVUX1NDSEVEVUxFKTsKICBjb25zdCBzaGVldCA9IGdldE9yQ3JlYXRlU2hlZXQoU0hFRVRfU0NIRURVTEUsIFsnb3JkZXInLCAnaWQnLCAnc3RhcnRUaW1lJywgJ2VuZFRpbWUnLCAndGl0bGUnLCAnZ3JvdXAnXSk7CiAgaWYgKCFleGlzdGVkKSB7CiAgICBTQ0hFRFVMRV9TRUVELmZvckVhY2gocm93ID0+IHNoZWV0LmFwcGVuZFJvdyhyb3cpKTsKICB9CiAgcmV0dXJuIHNoZWV0Owp9CgovKiAtLS0tLS0tLS0tLS0tLS0tIEhhbmRsZXJzIC0tLS0tLS0tLS0tLS0tLS0gKi8KZnVuY3Rpb24gaGFuZGxlR2V0QWxsKCkgewogIGNvbnN0IHRhc2tzU2hlZXQgPSBnZXRPckNyZWF0ZVNoZWV0KFNIRUVUX1RBU0tTLAogICAgWydpZCcsICdjbGllbnRJZCcsICdkZXNjcmlwdGlvbicsICdzdGFydERhdGUnLCAnZW5kRGF0ZScsICdzdGF0dXMnLCAndG90YWxNaW51dGVzJywgJ3VwZGF0ZWRBdCddKTsKICBjb25zdCB0aW1ldGFibGVTaGVldCA9IGdldE9yQ3JlYXRlU2hlZXQoU0hFRVRfVElNRVRBQkxFLAogICAgWydkYXRlJywgJ2Jsb2NrJywgJ2NvbXBsZXRlZCcsICd1cGRhdGVkQXQnXSk7CiAgY29uc3QgcHJvZmlsZVNoZWV0ID0gZ2V0T3JDcmVhdGVTaGVldChTSEVFVF9QUk9GSUxFLCBbJ25hbWUnLCAndXBkYXRlZEF0J10pOwogIGNvbnN0IHNjaGVkdWxlU2hlZXQgPSBnZXRPclNlZWRTY2hlZHVsZVNoZWV0KCk7CiAgY29uc3QgcmVmbGVjdGlvbnNTaGVldCA9IGdldE9yQ3JlYXRlU2hlZXQoU0hFRVRfUkVGTEVDVElPTlMsCiAgICBbJ3Rhc2tJZCcsICdjbGllbnRJZCcsICdkZXNjcmlwdGlvbicsICdxdWFsaXR5JywgJ2RlbGl2ZXJlZCcsICdibG9ja2VycycsICdmb2xsb3dVcCcsICdjb25maWRlbmNlJywgJ25vdGVzJywgJ3RpbWVzdGFtcCddKTsKICBjb25zdCBjaGVja2luc1NoZWV0ID0gZ2V0T3JDcmVhdGVTaGVldChTSEVFVF9DSEVDS0lOUywKICAgIFsnZGF0ZScsICdibG9jaycsICdibG9ja1RpdGxlJywgJ21vb2QnLCAnb25UcmFjaycsICdmb2N1cycsICdlbmVyZ3knLCAnYmxvY2tlcicsICdub3RlcycsICd0aW1lc3RhbXAnXSk7CgogIGNvbnN0IGNsaWVudFRhc2tzID0gc2hlZXRUb09iamVjdHModGFza3NTaGVldCk7CiAgY29uc3QgdGltZXRhYmxlID0gc2hlZXRUb09iamVjdHModGltZXRhYmxlU2hlZXQpOwogIGNvbnN0IHByb2ZpbGVSb3dzID0gc2hlZXRUb09iamVjdHMocHJvZmlsZVNoZWV0KTsKICBjb25zdCBwcm9maWxlID0gcHJvZmlsZVJvd3MubGVuZ3RoID8gcHJvZmlsZVJvd3NbcHJvZmlsZVJvd3MubGVuZ3RoIC0gMV0gOiB7IG5hbWU6ICdEaW5pJyB9OwogIGNvbnN0IHNjaGVkdWxlID0gc2hlZXRUb09iamVjdHMoc2NoZWR1bGVTaGVldCk7CiAgY29uc3QgcmVmbGVjdGlvbnMgPSBzaGVldFRvT2JqZWN0cyhyZWZsZWN0aW9uc1NoZWV0KTsKICBjb25zdCBjaGVja2lucyA9IHNoZWV0VG9PYmplY3RzKGNoZWNraW5zU2hlZXQpOwoKICByZXR1cm4geyBzdGF0dXM6ICdvaycsIGNsaWVudFRhc2tzLCB0aW1ldGFibGUsIHByb2ZpbGUsIHNjaGVkdWxlLCByZWZsZWN0aW9ucywgY2hlY2tpbnMgfTsKfQoKZnVuY3Rpb24gaGFuZGxlR2V0U2NoZWR1bGUoKSB7CiAgY29uc3Qgc2NoZWR1bGVTaGVldCA9IGdldE9yU2VlZFNjaGVkdWxlU2hlZXQoKTsKICByZXR1cm4geyBzdGF0dXM6ICdvaycsIHNjaGVkdWxlOiBzaGVldFRvT2JqZWN0cyhzY2hlZHVsZVNoZWV0KSB9Owp9CgpmdW5jdGlvbiBoYW5kbGVVcHNlcnRUYXNrKHApIHsKICBjb25zdCBzaGVldCA9IGdldE9yQ3JlYXRlU2hlZXQoU0hFRVRfVEFTS1MsCiAgICBbJ2lkJywgJ2NsaWVudElkJywgJ2Rlc2NyaXB0aW9uJywgJ3N0YXJ0RGF0ZScsICdlbmREYXRlJywgJ3N0YXR1cycsICd0b3RhbE1pbnV0ZXMnLCAndXBkYXRlZEF0J10pOwogIGNvbnN0IG5vdyA9IG5ldyBEYXRlKCkudG9JU09TdHJpbmcoKTsKICBjb25zdCByb3cgPSBbcC5pZCwgcC5jbGllbnRJZCwgcC5kZXNjcmlwdGlvbiwgcC5zdGFydERhdGUsIHAuZW5kRGF0ZSwgcC5zdGF0dXMsIHAudG90YWxNaW51dGVzIHx8IDAsIG5vd107CiAgY29uc3QgZXhpc3RpbmdSb3cgPSBmaW5kUm93SW5kZXhCeUlkKHNoZWV0LCAnaWQnLCBwLmlkKTsKICBpZiAoZXhpc3RpbmdSb3cgPiAwKSB7CiAgICBzaGVldC5nZXRSYW5nZShleGlzdGluZ1JvdywgMSwgMSwgcm93Lmxlbmd0aCkuc2V0VmFsdWVzKFtyb3ddKTsKICB9IGVsc2UgewogICAgc2hlZXQuYXBwZW5kUm93KHJvdyk7CiAgfQogIHJldHVybiB7IHN0YXR1czogJ29rJyB9Owp9CgpmdW5jdGlvbiBoYW5kbGVEZWxldGVUYXNrKHApIHsKICBjb25zdCBzaGVldCA9IGdldE9yQ3JlYXRlU2hlZXQoU0hFRVRfVEFTS1MsCiAgICBbJ2lkJywgJ2NsaWVudElkJywgJ2Rlc2NyaXB0aW9uJywgJ3N0YXJ0RGF0ZScsICdlbmREYXRlJywgJ3N0YXR1cycsICd0b3RhbE1pbnV0ZXMnLCAndXBkYXRlZEF0J10pOwogIGNvbnN0IGV4aXN0aW5nUm93ID0gZmluZFJvd0luZGV4QnlJZChzaGVldCwgJ2lkJywgcC5pZCk7CiAgaWYgKGV4aXN0aW5nUm93ID4gMCkgc2hlZXQuZGVsZXRlUm93KGV4aXN0aW5nUm93KTsKICByZXR1cm4geyBzdGF0dXM6ICdvaycgfTsKfQoKZnVuY3Rpb24gaGFuZGxlVG9nZ2xlQmxvY2socCkgewogIGNvbnN0IHNoZWV0ID0gZ2V0T3JDcmVhdGVTaGVldChTSEVFVF9USU1FVEFCTEUsIFsnZGF0ZScsICdibG9jaycsICdjb21wbGV0ZWQnLCAndXBkYXRlZEF0J10pOwogIGNvbnN0IGZvdW5kUm93ID0gZmluZFJvd0luZGV4QnlUd29Db2xzKHNoZWV0LCAnZGF0ZScsIHAuZGF0ZSwgJ2Jsb2NrJywgcC5ibG9jayk7CiAgY29uc3Qgbm93ID0gbmV3IERhdGUoKS50b0lTT1N0cmluZygpOwogIGNvbnN0IHJvdyA9IFtwLmRhdGUsIHAuYmxvY2ssIHAuY29tcGxldGVkLCBub3ddOwogIGlmIChmb3VuZFJvdyA+IDApIHsKICAgIHNoZWV0LmdldFJhbmdlKGZvdW5kUm93LCAxLCAxLCByb3cubGVuZ3RoKS5zZXRWYWx1ZXMoW3Jvd10pOwogIH0gZWxzZSB7CiAgICBzaGVldC5hcHBlbmRSb3cocm93KTsKICB9CiAgcmV0dXJuIHsgc3RhdHVzOiAnb2snIH07Cn0KCi8qKgogKiBMb2dzIGEgInN3YXAiIOKAlCB3aGF0IHdhcyBhY3R1YWxseSBkb25lIGluc3RlYWQgb2YgdGhlIHBsYW5uZWQgYmxvY2sg4oCUCiAqIGtleWVkIGJ5IChkYXRlLCBibG9jayksIHNhbWUgdXBzZXJ0LWJ5LXR3by1jb2x1bW5zIHBhdHRlcm4gYXMKICogaGFuZGxlVG9nZ2xlQmxvY2suIEFuIGVtcHR5IGFjdHVhbFRpdGxlIG1lYW5zIHRoZSBzd2FwIHdhcyBjbGVhcmVkLgogKi8KZnVuY3Rpb24gaGFuZGxlTG9nT3ZlcnJpZGUocCkgewogIGNvbnN0IHNoZWV0ID0gZ2V0T3JDcmVhdGVTaGVldChTSEVFVF9USU1FVEFCTEVfTE9HLAogICAgWydkYXRlJywgJ2Jsb2NrJywgJ3BsYW5uZWRUaXRsZScsICdhY3R1YWxUaXRsZScsICdjb21wbGV0ZWQnLCAndXBkYXRlZEF0J10pOwogIGNvbnN0IG5vdyA9IG5ldyBEYXRlKCkudG9JU09TdHJpbmcoKTsKICBjb25zdCByb3cgPSBbcC5kYXRlLCBwLmJsb2NrLCBwLnBsYW5uZWRUaXRsZSB8fCAnJywgcC5hY3R1YWxUaXRsZSB8fCAnJywgISFwLmNvbXBsZXRlZCwgbm93XTsKICBjb25zdCBmb3VuZFJvdyA9IGZpbmRSb3dJbmRleEJ5VHdvQ29scyhzaGVldCwgJ2RhdGUnLCBwLmRhdGUsICdibG9jaycsIHAuYmxvY2spOwogIGlmIChmb3VuZFJvdyA+IDApIHsKICAgIHNoZWV0LmdldFJhbmdlKGZvdW5kUm93LCAxLCAxLCByb3cubGVuZ3RoKS5zZXRWYWx1ZXMoW3Jvd10pOwogIH0gZWxzZSB7CiAgICBzaGVldC5hcHBlbmRSb3cocm93KTsKICB9CiAgcmV0dXJuIHsgc3RhdHVzOiAnb2snIH07Cn0KCmZ1bmN0aW9uIGhhbmRsZVNhdmVSZWZsZWN0aW9uKHApIHsKICBjb25zdCBzaGVldCA9IGdldE9yQ3JlYXRlU2hlZXQoU0hFRVRfUkVGTEVDVElPTlMsCiAgICBbJ3Rhc2tJZCcsICdjbGllbnRJZCcsICdkZXNjcmlwdGlvbicsICdxdWFsaXR5JywgJ2RlbGl2ZXJlZCcsICdibG9ja2VycycsICdmb2xsb3dVcCcsICdjb25maWRlbmNlJywgJ25vdGVzJywgJ3RpbWVzdGFtcCddKTsKICBzaGVldC5hcHBlbmRSb3coWwogICAgcC50YXNrSWQsIHAuY2xpZW50SWQsIHAuZGVzY3JpcHRpb24sIHAucXVhbGl0eSwgcC5kZWxpdmVyZWQsCiAgICBwLmJsb2NrZXJzLCBwLmZvbGxvd1VwLCBwLmNvbmZpZGVuY2UsIHAubm90ZXMsIG5ldyBEYXRlKCkudG9JU09TdHJpbmcoKQogIF0pOwogIHJldHVybiB7IHN0YXR1czogJ29rJyB9Owp9CgpmdW5jdGlvbiBoYW5kbGVTYXZlUHJvZmlsZShwKSB7CiAgY29uc3Qgc2hlZXQgPSBnZXRPckNyZWF0ZVNoZWV0KFNIRUVUX1BST0ZJTEUsIFsnbmFtZScsICd1cGRhdGVkQXQnXSk7CiAgc2hlZXQuYXBwZW5kUm93KFtwLm5hbWUsIG5ldyBEYXRlKCkudG9JU09TdHJpbmcoKV0pOwogIHJldHVybiB7IHN0YXR1czogJ29rJyB9Owp9CgovKioKICogTG9ncyBhIDUtbWludXRlIGNoZWNrLWluIOKAlCB0aGUgc2hvcnQgc3VydmV5IHRoYXQgYXV0by1vcGVucyBvbiB0aGUKICogY2xpZW50IHdoZW4gYSB0aW1ldGFibGUgYmxvY2sgaGFzIDUgbWludXRlcyBsZWZ0LiBBcHBlbmRlZCwgbm90CiAqIHVwc2VydGVkLCBzbyBhIGJsb2NrIHZpc2l0ZWQgbXVsdGlwbGUgdGltZXMgYWNyb3NzIGRpZmZlcmVudCBkYXlzCiAqIChvciByZS1hbnN3ZXJlZCB0aGUgc2FtZSBkYXkpIGtlZXBzIGl0cyBmdWxsIGhpc3RvcnkgcmF0aGVyIHRoYW4KICogb3ZlcndyaXRpbmcgdGhlIHByZXZpb3VzIGFuc3dlciDigJQgdW5saWtlIFRhc2tzL1RpbWV0YWJsZSByb3dzLAogKiB3aGljaCByZXByZXNlbnQgY3VycmVudCBzdGF0ZSwgZWFjaCBjaGVjay1pbiBpcyBpdHMgb3duIG1vbWVudCBpbgogKiB0aW1lIHdvcnRoIGtlZXBpbmcuCiAqLwpmdW5jdGlvbiBoYW5kbGVTYXZlQ2hlY2tpbihwKSB7CiAgY29uc3Qgc2hlZXQgPSBnZXRPckNyZWF0ZVNoZWV0KFNIRUVUX0NIRUNLSU5TLAogICAgWydkYXRlJywgJ2Jsb2NrJywgJ2Jsb2NrVGl0bGUnLCAnbW9vZCcsICdvblRyYWNrJywgJ2ZvY3VzJywgJ2VuZXJneScsICdibG9ja2VyJywgJ25vdGVzJywgJ3RpbWVzdGFtcCddKTsKICBzaGVldC5hcHBlbmRSb3coWwogICAgcC5kYXRlLCBwLmJsb2NrLCBwLmJsb2NrVGl0bGUsIHAubW9vZCwgcC5vblRyYWNrLAogICAgcC5mb2N1cywgcC5lbmVyZ3ksIHAuYmxvY2tlciwgcC5ub3RlcywgbmV3IERhdGUoKS50b0lTT1N0cmluZygpCiAgXSk7CiAgcmV0dXJuIHsgc3RhdHVzOiAnb2snIH07Cn0K";
+
+        async function maybeShowOnboarding() {
+            const settings = await getSettings();
+            if (settings.onboardingDone) return;
+            const overlay = document.getElementById('onboardingOverlay');
+            overlay.classList.remove('hidden'); overlay.classList.add('flex');
+        }
+        function showOnboardingNote(msg) {
+            const el = document.getElementById('onboardingError');
+            el.textContent = msg;
+            el.classList.remove('hidden');
+        }
+        async function copyBackendScript() {
+            try {
+                const script = atob(BACKEND_SCRIPT_B64);
+                await navigator.clipboard.writeText(script);
+                showOnboardingNote('Copied — paste it into the Apps Script editor.');
+            } catch (e) {
+                showOnboardingNote("Couldn't copy automatically — your browser may be blocking clipboard access.");
+            }
+        }
+        async function testAndContinueOnboarding() {
+            const url = document.getElementById('onboardingUrlInput').value.trim();
+            const btn = document.getElementById('onboardingTestBtn');
+            if (!url) { showOnboardingNote('Paste your Apps Script Web App URL first, or tap Skip below.'); return; }
+            btn.textContent = 'Testing…';
+            try {
+                const res = await jsonp(url, { action: 'getSchedule' });
+                if (res.status !== 'ok') throw new Error(res.message || 'bad response');
+                const existing = await getSettings();
+                await setStore('settings', { ...existing, sheetsUrl: url, onboardingDone: true });
+                finishOnboarding();
+            } catch (e) {
+                showOnboardingNote("Couldn't reach that URL — check it's deployed as a Web App with 'Anyone' access, and that you copied the full /exec link.");
+            } finally {
+                btn.textContent = 'Test connection & continue';
+            }
+        }
+        async function skipOnboarding() {
+            const existing = await getSettings();
+            await setStore('settings', { ...existing, onboardingDone: true });
+            finishOnboarding();
+        }
+        function finishOnboarding() {
+            const overlay = document.getElementById('onboardingOverlay');
+            overlay.classList.add('hidden'); overlay.classList.remove('flex');
+        }
+        /* Builds a YYYY-MM-DD key from a Date's LOCAL fields — never via
+           .toISOString(), which converts to UTC first. For any positive
+           UTC offset (e.g. IST, +5:30), local midnight on day N is still
+           the previous day in UTC, so toISOString().slice(0,10) silently
+           returns the wrong date. This is the single source of truth for
+           every date key in the app now — todayKey(), dateKeysBack(), and
+           the month report all funnel through it so a given calendar day
+           always produces the same key everywhere. */
+        function localDateKey(d) {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        }
+        function todayKey() { return localDateKey(new Date()); }
+        function minutesToLabel(m) {
+            if (!m) return '0m';
+            const h = Math.floor(m / 60), mm = m % 60;
+            return (h ? h + 'h ' : '') + (mm || !h ? mm + 'm' : '');
+        }
+        function dateKeysBack(n) {
+            const out = [];
+            for (let i = n - 1; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); out.push(localDateKey(d)); }
+            return out;
+        }
+        function relativeDateLabel(task) {
+            const dayMs = 86400000;
+            const today = new Date(todayKey() + 'T00:00:00');
+            const start = new Date(task.startDate + 'T00:00:00');
+            const end = new Date(task.endDate + 'T00:00:00');
+            const fmt = d => d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+            const toStart = Math.round((start - today) / dayMs);
+            const toEnd = Math.round((end - today) / dayMs);
+            if (toStart > 0) return `Starts ${fmt(start)}`;
+            if (toEnd < 0) return `Was due ${fmt(end)}`;
+            if (toEnd === 0) return 'Due today';
+            if (toEnd === 1) return 'Due tomorrow';
+            return `Due in ${toEnd}d · ${fmt(end)}`;
+        }
+
+        /* ================= Google Sheets bridge (JSONP — works around Apps Script CORS) ================= */
+        function jsonp(url, params, timeoutMs = 10000) {
+            return new Promise((resolve, reject) => {
+                const cbName = 'jp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+                const script = document.createElement('script');
+                let done = false;
+                window[cbName] = (data) => { done = true; resolve(data); cleanup(); };
+                function cleanup() { delete window[cbName]; script.remove(); }
+                script.onerror = () => { if (!done) { reject(new Error('network')); cleanup(); } };
+                const u = new URL(url);
+                Object.entries(params).forEach(([k, v]) => u.searchParams.set(k, v));
+                u.searchParams.set('callback', cbName);
+                script.src = u.toString();
+                document.body.appendChild(script);
+                setTimeout(() => { if (!done) { reject(new Error('timeout')); cleanup(); } }, timeoutMs);
+            });
+        }
+        async function sheetsCall(action, payloadObj) {
+            const settings = await getSettings();
+            if (!settings.sheetsUrl) return { status: 'no-url' };
+            try {
+                const res = await jsonp(settings.sheetsUrl, { action, payload: JSON.stringify(payloadObj || {}) });
+                await updateSyncBadgeFromQueue();
+                return res;
+            } catch (e) {
+                const queue = await getStore('sync-queue', []);
+                queue.push({ action, payload: payloadObj, ts: Date.now() });
+                await setStore('sync-queue', queue);
+                updateSyncBadge(queue.length, false);
+                return { status: 'queued' };
+            }
+        }
+        async function retryQueue() {
+            const settings = await getSettings();
+            if (!settings.sheetsUrl) { updateSyncBadge(0, true); return; }
+            let queue = await getStore('sync-queue', []);
+            if (!queue.length) { updateSyncBadge(0, false); return; }
+            const remaining = [];
+            for (const item of queue) {
+                try { await jsonp(settings.sheetsUrl, { action: item.action, payload: JSON.stringify(item.payload || {}) }); }
+                catch (e) { remaining.push(item); }
+            }
+            await setStore('sync-queue', remaining);
+            updateSyncBadge(remaining.length, false);
+        }
+        async function updateSyncBadgeFromQueue() {
+            const settings = await getSettings();
+            const queue = await getStore('sync-queue', []);
+            updateSyncBadge(queue.length, !settings.sheetsUrl);
+        }
+        function updateSyncBadge(count, noUrlConfigured) {
+            const dot = document.getElementById('syncDot');
+            if (dot) dot.classList.toggle('hidden', count === 0 || noUrlConfigured);
+            const statusText = document.getElementById('syncStatusText');
+            const statusSub = document.getElementById('syncStatusSub');
+            if (!statusText) return;
+            if (noUrlConfigured) { statusText.textContent = 'Not connected'; statusSub.textContent = 'Add a Sheets URL to enable sync'; }
+            else if (count === 0) { statusText.textContent = 'All synced'; statusSub.textContent = 'No pending items'; }
+            else { statusText.textContent = count + ' item' + (count > 1 ? 's' : '') + ' pending'; statusSub.textContent = 'Will retry automatically, or tap Retry now'; }
+        }
+        async function restoreFromSheets() {
+            const settings = await getSettings();
+            if (!settings.sheetsUrl) { showToast("Add your Sheets URL first"); return; }
+            try {
+                const res = await jsonp(settings.sheetsUrl, { action: 'getAll' });
+                if (res.status !== 'ok') throw new Error(res.message || 'failed');
+
+                const latestReflectionByTaskId = {};
+                (res.reflections || []).forEach(r => {
+                    const existing = latestReflectionByTaskId[r.taskId];
+                    if (!existing || String(r.timestamp || '') > String(existing.timestamp || '')) latestReflectionByTaskId[r.taskId] = r;
+                });
+
+                const tasks = (res.clientTasks || []).map(r => {
+                    const refl = latestReflectionByTaskId[String(r.id)];
+                    return {
+                        id: String(r.id), clientId: r.clientId, description: r.description,
+                        startDate: r.startDate, endDate: r.endDate, status: r.status || 'not-started',
+                        completed: r.status === 'done',
+                        timeLog: r.totalMinutes ? [{ date: todayKey(), minutes: Number(r.totalMinutes) }] : [],
+                        reflection: refl ? {
+                            quality: refl.quality, delivered: refl.delivered, blockers: refl.blockers,
+                            followUp: refl.followUp, confidence: refl.confidence, notes: refl.notes
+                        } : undefined,
+                        createdAt: r.updatedAt || new Date().toISOString(),
+                        updatedAt: r.updatedAt || new Date().toISOString()
+                    };
+                });
+                tasksCache = tasks;
+                await persistTasksCache();
+
+                const byDate = {};
+                (res.timetable || []).forEach(r => {
+                    if (!byDate[r.date]) byDate[r.date] = {};
+                    byDate[r.date][r.block] = String(r.completed) === 'true';
+                });
+                for (const date in byDate) { await setStore('timetable:' + date, byDate[date]); }
+
+                const checkinsByDate = {};
+                (res.checkins || []).forEach(r => {
+                    if (!checkinsByDate[r.date]) checkinsByDate[r.date] = {};
+                    checkinsByDate[r.date][r.block] = {
+                        mood: r.mood, onTrack: r.onTrack, focus: r.focus,
+                        energy: r.energy, blocker: r.blocker, notes: r.notes
+                    };
+                });
+                for (const date in checkinsByDate) { await setStore('checkins:' + date, checkinsByDate[date]); }
+
+                await renderTimetable(); await renderClientTasks();
+                showToast('Restored from Sheets');
+            } catch (e) { showToast('Restore failed — check your Sheets URL'); }
+        }
+
+        /* ---- Auto-merge on load: pulls Sheets data in WITHOUT clobbering local
+               changes that haven't synced yet. Unlike restoreFromSheets() (a full
+               overwrite, only run when the user explicitly taps the button), this
+               only fills gaps: it adds tasks/blocks the local cache doesn't know
+               about yet, and only overwrites a local task when the remote copy is
+               provably newer (updatedAt comparison). It never deletes anything
+               locally — a task or checkmark that only exists locally (e.g. still
+               sitting in the offline sync-queue) is left alone. ---- */
+        async function mergeTasksFromRemote(remoteRows) {
+            const tasks = await loadTasksCache();
+            const byId = {};
+            tasks.forEach(t => byId[t.id] = t);
+            let changed = false;
+            remoteRows.forEach(r => {
+                const id = String(r.id);
+                const local = byId[id];
+                if (!local) {
+                    tasks.push({
+                        id, clientId: r.clientId, description: r.description,
+                        startDate: r.startDate, endDate: r.endDate, status: r.status || 'not-started',
+                        completed: r.status === 'done',
+                        timeLog: r.totalMinutes ? [{ date: todayKey(), minutes: Number(r.totalMinutes) }] : [],
+                        createdAt: r.updatedAt || new Date().toISOString(),
+                        updatedAt: r.updatedAt || new Date().toISOString()
+                    });
+                    changed = true;
+                    return;
+                }
+                const localTime = new Date(local.updatedAt || local.createdAt || 0).getTime();
+                const remoteTime = new Date(r.updatedAt || 0).getTime();
+                if (remoteTime > localTime) {
+                    Object.assign(local, {
+                        clientId: r.clientId, description: r.description, startDate: r.startDate,
+                        endDate: r.endDate, status: r.status || 'not-started', completed: r.status === 'done',
+                        updatedAt: r.updatedAt
+                    });
+                    changed = true;
+                }
+            });
+            if (changed) { tasksCache = tasks; await persistTasksCache(); }
+        }
+        async function mergeTimetableFromRemote(remoteRows) {
+            const byDate = {};
+            remoteRows.forEach(r => { (byDate[r.date] = byDate[r.date] || []).push(r); });
+            for (const date in byDate) {
+                const progress = await getStore('timetable:' + date, {});
+                let changed = false;
+                byDate[date].forEach(r => {
+                    if (!(r.block in progress)) {
+                        progress[r.block] = (r.completed === true || String(r.completed) === 'true');
+                        changed = true;
+                    }
+                });
+                if (changed) await setStore('timetable:' + date, progress);
+            }
+        }
+
+        /**
+         * Reflections are append-only in the Sheet (one row per time a task
+         * was reflected on) but stored locally as a single latest snapshot
+         * per task (t.reflection). Collapses remote rows down to the
+         * newest one per taskId, then — same "fill gaps, never overwrite"
+         * rule as mergeTasksFromRemote — only adopts it if this device
+         * doesn't already have a reflection for that task locally. This is
+         * what makes the desktop History panel actually complete across
+         * devices instead of only showing whatever was reflected on THIS
+         * device.
+         */
+        async function mergeReflectionsFromRemote(remoteRows) {
+            const latestByTaskId = {};
+            remoteRows.forEach(r => {
+                const existing = latestByTaskId[r.taskId];
+                if (!existing || String(r.timestamp || '') > String(existing.timestamp || '')) latestByTaskId[r.taskId] = r;
+            });
+            const tasks = await loadTasksCache();
+            let changed = false;
+            tasks.forEach(t => {
+                const r = latestByTaskId[t.id];
+                if (!r || t.reflection) return;
+                t.reflection = {
+                    quality: r.quality, delivered: r.delivered, blockers: r.blockers,
+                    followUp: r.followUp, confidence: r.confidence, notes: r.notes
+                };
+                changed = true;
+            });
+            if (changed) { tasksCache = tasks; await persistTasksCache(); }
+        }
+
+        /**
+         * Same fill-gaps pattern as mergeTimetableFromRemote, applied to
+         * checkins:YYYY-MM-DD — only adds a block's check-in if this
+         * device doesn't already have one recorded for that date+block.
+         */
+        async function mergeCheckinsFromRemote(remoteRows) {
+            const byDate = {};
+            remoteRows.forEach(r => { (byDate[r.date] = byDate[r.date] || []).push(r); });
+            for (const date in byDate) {
+                const local = await getStore('checkins:' + date, {});
+                let changed = false;
+                byDate[date].forEach(r => {
+                    if (!(r.block in local)) {
+                        local[r.block] = {
+                            mood: r.mood, onTrack: r.onTrack, focus: r.focus,
+                            energy: r.energy, blocker: r.blocker, notes: r.notes
+                        };
+                        changed = true;
+                    }
+                });
+                if (changed) await setStore('checkins:' + date, local);
+            }
+        }
+
+        /**
+         * Same fill-gaps rule as everything else here. Note this one was
+         * previously missing entirely — handleGetAll() has always
+         * returned a profile object, but nothing on the client ever read
+         * res.profile, so name/photo never actually synced down. Only
+         * photoUrl (not an uploaded photo's base64 blob) is meaningful to
+         * pull here — uploaded photos are deliberately local-only.
+         */
+        async function mergeProfileFromRemote(remoteProfile) {
+            if (!remoteProfile) return;
+            const local = await getStore('profile', { name: 'Dini', photo: null });
+            let changed = false;
+            if (!local.name && remoteProfile.name) { local.name = remoteProfile.name; changed = true; }
+            if (!local.photo && remoteProfile.photoUrl) { local.photo = remoteProfile.photoUrl; local.photoIsUrl = true; changed = true; }
+            if (changed) await setStore('profile', local);
+        }
+
+        async function autoMergeFromSheets() {
+            const settings = await getSettings();
+            if (!settings.sheetsUrl) return;
+            try {
+                const res = await jsonp(settings.sheetsUrl, { action: 'getAll' });
+                if (res.status !== 'ok') return;
+                await mergeTasksFromRemote(res.clientTasks || []);
+                await mergeTimetableFromRemote(res.timetable || []);
+                await mergeReflectionsFromRemote(res.reflections || []);
+                await mergeCheckinsFromRemote(res.checkins || []);
+                await mergeProfileFromRemote(res.profile);
+            } catch (e) {
+                // offline or unreachable — silently keep the local cache as-is,
+                // same graceful fallback pattern used by initSchedule()
+            }
+        }
+
+        /* ================= Schedule data ================= */
+        const RAW_SCHEDULE = [
+            ['meditation', '4:00–5:00', 'Meditation, study, plan the day', 'Morning', 4, 0, 5, 0],
+            ['yoga', '5:00–6:00', 'Yoga / Exercise', 'Morning', 5, 0, 6, 0],
+            ['bath', '6:00–7:00', 'Bath, get ready', 'Morning', 6, 0, 7, 0],
+            ['breakfast', '7:00–9:15', 'Breakfast, family time, get daughter ready', 'Morning', 7, 0, 9, 15],
+            ['dropoff', '9:15–9:45', 'School drop-off + back home', 'Morning', 9, 15, 9, 45],
+            ['creative', '9:45–10:15', 'Creative & social post for Amortree', 'Marketing & Outreach', 9, 45, 10, 15],
+            ['outreach', '10:15–11:15', 'Outreach — 10+ messages / emails', 'Marketing & Outreach', 10, 15, 11, 15],
+            ['clientwork1', '11:15–1:00', 'Client work (if any)', 'Marketing & Outreach', 11, 15, 13, 0],
+            ['lunch', '1:00–2:00', 'Lunch', 'Break', 13, 0, 14, 0],
+            ['dropship', '2:00–3:00', 'Dropshipping setup / management', 'Deep Work', 14, 0, 15, 0],
+            ['corework', '3:00–6:00', 'Core work — Microrelic / Amortree', 'Deep Work', 15, 0, 18, 0],
+            ['break2', '6:00–6:15', 'Break / tea', 'Learning', 18, 0, 18, 15],
+            ['learning', '6:15–7:15', 'Self-branding training / n8n automation', 'Learning', 18, 15, 19, 15],
+            ['family', '7:15–9:00', 'Family time + dinner', 'Evening', 19, 15, 21, 0],
+            ['planday', '9:00–9:30', "Plan tomorrow's top 3 tasks", 'Evening', 21, 0, 21, 30],
+            ['winddown', '9:30–11:00', 'Wind down, sleep prep', 'Evening', 21, 30, 23, 0],
+        ];
+        const BUILTIN_SCHEDULE = RAW_SCHEDULE.map((r, i) => ({ id: r[0], time: r[1], title: r[2], group: r[3], start: r[4] * 60 + r[5], end: r[6] * 60 + r[7], order: i }));
+        let SCHEDULE = BUILTIN_SCHEDULE.slice();
+
+        /* ---- Schedule sync (Google Sheets "Schedule" tab) ---- */
+        function parseTimeToMinutes(str) {
+            const parts = String(str).split(':');
+            const h = parseInt(parts[0], 10) || 0, m = parseInt(parts[1], 10) || 0;
+            return h * 60 + m;
+        }
+        function parseScheduleRow(r, idx) {
+            const start = parseTimeToMinutes(r.startTime);
+            const end = parseTimeToMinutes(r.endTime);
+            return { id: String(r.id), time: `${r.startTime}–${r.endTime}`, title: r.title, group: r.group || 'Schedule', start, end, order: (r.order !== undefined && r.order !== '') ? Number(r.order) : idx };
+        }
+        async function fetchAndCacheSchedule(announce) {
+            const settings = await getSettings();
+            if (!settings.sheetsUrl) { if (announce) showToast('Add your Sheets URL first'); return null; }
+            try {
+                const res = await jsonp(settings.sheetsUrl, { action: 'getSchedule' });
+                if (res.status !== 'ok' || !Array.isArray(res.schedule) || !res.schedule.length) throw new Error('empty');
+                const parsed = res.schedule.map(parseScheduleRow).sort((a, b) => a.order - b.order);
+                await setStore('schedule-cache', parsed);
+                await setStore('schedule-last-synced', Date.now());
+                if (announce) showToast('Schedule refreshed');
+                return parsed;
+            } catch (e) {
+                if (announce) showToast('Could not refresh schedule — check your Sheets URL');
+                return null;
+            }
+        }
+        async function initSchedule() {
+            const cached = await getStore('schedule-cache', null);
+            if (cached && cached.length) SCHEDULE = cached;
+            const fetched = await fetchAndCacheSchedule(false);
+            if (fetched && fetched.length) SCHEDULE = fetched;
+        }
+        function formatLastSynced(ts) {
+            if (!ts) return 'Never synced';
+            const mins = Math.round((Date.now() - ts) / 60000);
+            if (mins < 1) return 'Synced just now';
+            if (mins < 60) return `Synced ${mins}m ago`;
+            const hrs = Math.round(mins / 60);
+            if (hrs < 24) return `Synced ${hrs}h ago`;
+            return `Synced ${Math.round(hrs / 24)}d ago`;
+        }
+
+        function getCurrentBlockId() {
+            const now = new Date();
+            const mins = now.getHours() * 60 + now.getMinutes();
+            const block = SCHEDULE.find(b => mins >= b.start && mins < b.end);
+            return block ? block.id : null;
+        }
+
+        /* ================= Liquid blob background ================= */
+        function initBlobs() {
+            const field = document.getElementById('blobField');
+            [420, 340, 380, 260].forEach((s, i) => {
+                const b = document.createElement('div');
+                b.className = 'blob';
+                b.style.width = s + 'px'; b.style.height = s + 'px';
+                b.style.left = (Math.random() * 80) + '%'; b.style.top = (Math.random() * 80) + '%';
+                field.appendChild(b);
+                gsap.to(b, {
+                    x: () => gsap.utils.random(-120, 120), y: () => gsap.utils.random(-100, 100), scale: () => gsap.utils.random(0.85, 1.25),
+                    duration: () => gsap.utils.random(14, 22), repeat: -1, yoyo: true, ease: 'sine.inOut', delay: i * 1.2
+                });
+            });
+        }
+
+        /* ================= Alarms & countdown ================= */
+        const alarmedBlocks = new Set();
+
+        /* ---- Native background alarms (Android app build only) ----
+           setInterval(alarmTick, 5000) below only fires while this page
+           is the foreground tab/app — that's fine in a browser tab the
+           user keeps open, but Android suspends JS timers once the app
+           is backgrounded, so the in-browser alarm alone would silently
+           stop working the moment the phone screen locks. When running
+           inside the native Capacitor shell, window.Capacitor exists, so
+           we additionally schedule real OS-level notifications via
+           @capacitor/local-notifications for every remaining block's
+           5-minutes-left mark today — these fire even if the app isn't
+           open. This runs alongside (not instead of) the existing
+           alarmTick() loop, which still handles sound/vibration/opening
+           the check-in survey while the app IS in the foreground. */
+        /* ================= Celebration bursts =================
+           Fires from the exact point tapped — a checkbox or a status
+           pill — using GSAP for a genuine radial confetti burst rather
+           than a flat fade: particles pop in with an overshoot ease,
+           fan outward at randomized angles/distances/rotations, then
+           arc downward and fade like they're actually falling. Appended
+           to <body> with position:fixed computed from getBoundingClientRect
+           so it works regardless of which scroll container the trigger
+           element sits in. */
+        function celebrateBurst(originEl, emojis, count) {
+            if (!originEl || typeof gsap === 'undefined') return;
+            const rect = originEl.getBoundingClientRect();
+            const originX = rect.left + rect.width / 2;
+            const originY = rect.top + rect.height / 2;
+            const particles = [];
+            for (let i = 0; i < count; i++) {
+                const span = document.createElement('span');
+                span.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                span.style.cssText = `position:fixed; left:${originX}px; top:${originY}px; font-size:${15 + Math.random() * 11}px; line-height:1; pointer-events:none; z-index:9999; will-change:transform,opacity;`;
+                document.body.appendChild(span);
+                particles.push(span);
+            }
+            particles.forEach((span, i) => {
+                const angle = (Math.PI * 2 * i) / particles.length + (Math.random() - 0.5) * 0.7;
+                const distance = 46 + Math.random() * 54;
+                const dx = Math.cos(angle) * distance;
+                const dy = Math.sin(angle) * distance - 18;
+                gsap.set(span, { scale: 0, opacity: 0, rotation: 0, xPercent: -50, yPercent: -50 });
+                gsap.timeline({ onComplete: () => span.remove() })
+                    .to(span, { scale: 1.15, opacity: 1, duration: 0.22, ease: 'back.out(2.6)', delay: i * 0.018 })
+                    .to(span, { x: dx, y: dy, rotation: (Math.random() - 0.5) * 150, duration: 0.5, ease: 'power2.out' }, '<')
+                    .to(span, { y: dy + 46, opacity: 0, duration: 0.42, ease: 'power1.in' }, '-=0.12');
+            });
+            if (navigator.vibrate) navigator.vibrate(count > 6 ? [14, 40, 14] : 12);
+        }
+        function celebrateBlockDone(el) {
+            celebrateBurst(el, ['✨', '⚡', '💪', '🎯', '🔥'], 6);
+        }
+        function celebrateTaskDone(el) {
+            celebrateBurst(el, ['🎉', '🥳', '✨', '🚀', '⭐', '🙌'], 11);
+            const card = el.closest('[data-task]');
+            if (card && typeof gsap !== 'undefined') {
+                const inkRgb = getComputedStyle(document.documentElement).getPropertyValue('--ink-rgb').trim();
+                gsap.fromTo(card,
+                    { boxShadow: `0 0 0 0 rgba(${inkRgb}, 0)` },
+                    { boxShadow: `0 0 0 2px rgba(${inkRgb}, 0.35)`, duration: 0.32, yoyo: true, repeat: 1, ease: 'power2.inOut' });
+            }
+        }
+        function isNativePlatform() {
+            return typeof window !== 'undefined' && window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function' && window.Capacitor.isNativePlatform();
+        }
+        /**
+         * Android 15+/16 render the WebView edge-to-edge under the status
+         * and navigation bars with no opt-out — this app's background is
+         * what's actually behind those bars now, so their icons need to
+         * contrast against whichever theme is active (they otherwise
+         * default to a style meant for the opposite background and can
+         * render near-invisible). Confusingly, in this API "DARK" means
+         * "light icons for a dark background" and "LIGHT" means "dark
+         * icons for a light background" (it names the resulting style,
+         * not the icon color) — this is the exact enum from
+         * @capacitor/core's own type definitions, not a guess.
+         */
+        async function styleSystemBarsForTheme(theme) {
+            if (!isNativePlatform()) return;
+            const SystemBars = window.Capacitor.Plugins && window.Capacitor.Plugins.SystemBars;
+            if (!SystemBars) return;
+            try { await SystemBars.setStyle({ style: theme === 'light' ? 'LIGHT' : 'DARK' }); }
+            catch (e) { console.error('SystemBars styling failed', e); }
+        }
+        function hashToNotifId(str) {
+            let h = 0;
+            for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0;
+            return Math.abs(h) % 2147483647 || 1;
+        }
+        let nativeAlarmsScheduledFor = null;
+        async function scheduleNativeAlarms() {
+            if (!isNativePlatform()) return;
+            const LN = window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications;
+            if (!LN) return;
+            try {
+                const perm = await LN.requestPermissions();
+                if (perm.display !== 'granted') return;
+                const pending = await LN.getPending();
+                if (pending.notifications && pending.notifications.length) {
+                    await LN.cancel({ notifications: pending.notifications.map(n => ({ id: n.id })) });
+                }
+                const now = new Date();
+                const nowMin = now.getHours() * 60 + now.getMinutes();
+                const todayStr = todayKey();
+                const notifications = SCHEDULE
+                    .filter(b => (b.end - 5) > nowMin)
+                    .map(b => {
+                        const fireAt = new Date();
+                        fireAt.setSeconds(0, 0);
+                        fireAt.setHours(0, 0, 0, 0);
+                        fireAt.setMinutes(b.end - 5);
+                        return {
+                            id: hashToNotifId(todayStr + ':' + b.id),
+                            title: '5 minutes left',
+                            body: b.title,
+                            schedule: { at: fireAt }
+                        };
+                    });
+                if (notifications.length) await LN.schedule({ notifications });
+                nativeAlarmsScheduledFor = todayStr;
+            } catch (e) { console.error('native alarm scheduling failed', e); }
+        }
+        async function alarmTick() {
+            if (isNativePlatform() && nativeAlarmsScheduledFor !== todayKey()) scheduleNativeAlarms();
+            const currentId = getCurrentBlockId();
+            if (!currentId) return;
+            const block = SCHEDULE.find(b => b.id === currentId);
+            const now = new Date();
+            const nowMin = now.getHours() * 60 + now.getMinutes();
+            const secsRemaining = (block.end - nowMin) * 60 - now.getSeconds();
+            if (secsRemaining <= 300 && secsRemaining > 0 && !alarmedBlocks.has(block.id)) {
+                alarmedBlocks.add(block.id);
+                fireAlarm(block);
+            }
+        }
+        async function fireAlarm(block) {
+            const settings = await getSettings();
+            if ('Notification' in window && Notification.permission === 'granted') {
+                try { new Notification('5 minutes left', { body: block.title }); } catch (e) { }
+            }
+            if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+            playAlarmSound(settings.alarmUrl);
+            if (!isAnyOverlayOpen()) openCheckin(block);
+        }
+        function isAnyOverlayOpen() {
+            const ids = ['modalOverlay', 'reflectionOverlay', 'settingsOverlay', 'logTimeOverlay', 'overrideOverlay', 'monthReportOverlay', 'checkinOverlay', 'onboardingOverlay'];
+            return ids.some(id => {
+                const el = document.getElementById(id);
+                return el && !el.classList.contains('hidden');
+            });
+        }
+        function playAlarmSound(customUrl) {
+            if (customUrl) { const audio = new Audio(customUrl); audio.play().catch(() => { }); return; }
+            try {
+                const ctx = window.__alarmCtx || (window.__alarmCtx = new (window.AudioContext || window.webkitAudioContext)());
+                const notes = [523.25, 659.25, 783.99, 1046.5];
+                notes.forEach((freq, i) => {
+                    const osc = ctx.createOscillator(); const gain = ctx.createGain();
+                    osc.type = 'triangle'; osc.frequency.value = freq;
+                    const t0 = ctx.currentTime + i * 0.18;
+                    gain.gain.setValueAtTime(0.0001, t0);
+                    gain.gain.exponentialRampToValueAtTime(0.28, t0 + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.32);
+                    osc.connect(gain).connect(ctx.destination);
+                    osc.start(t0); osc.stop(t0 + 0.35);
+                });
+            } catch (e) { }
+        }
+        function tickCountdowns() {
+            const currentId = getCurrentBlockId();
+            if (!currentId) return;
+            const block = SCHEDULE.find(b => b.id === currentId);
+            const el = document.getElementById('countdown-' + block.id);
+            if (!el) return;
+            const now = new Date();
+            const nowMin = now.getHours() * 60 + now.getMinutes();
+            const secsRemaining = Math.max(0, (block.end - nowMin) * 60 - now.getSeconds());
+            const m = Math.floor(secsRemaining / 60), s = secsRemaining % 60;
+            el.textContent = `${m}:${s.toString().padStart(2, '0')} left`;
+        }
+
+        /* ================= Rendering: Timetable ================= */
+        async function renderTimetable() {
+            const container = document.getElementById('view-timetable');
+            const progress = await getStore('timetable:' + todayKey(), {});
+            const overrides = await getStore('override:' + todayKey(), {});
+            const currentId = getCurrentBlockId();
+            let groups = {};
+            SCHEDULE.forEach(item => { (groups[item.group] = groups[item.group] || []).push(item); });
+
+            let html = '';
+            Object.keys(groups).forEach(groupName => {
+                html += `<p class="text-[11px] uppercase tracking-[0.18em] font-mono mt-6 mb-2.5 first:mt-0" style="color:var(--ink-dimmer)">${groupName}</p>`;
+                groups[groupName].forEach(item => {
+                    const done = !!progress[item.id];
+                    const isNow = item.id === currentId;
+                    const ov = overrides[item.id];
+                    const displayTitle = ov ? ov.actualTitle : item.title;
+                    html += `
+      <div class="glass rounded-2xl px-4 py-3.5 mb-2.5 flex items-center gap-3.5 task-card ${isNow ? 'now' : ''}" data-block="${item.id}" id="block-${item.id}">
+        <button class="checkbox-toggle checkbox-ring ${done ? 'done' : ''}" data-block="${item.id}">
+          ${done ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>' : ''}
+        </button>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <p class="text-sm font-medium leading-snug ${done ? 'line-through' : ''}" style="${done ? 'color:var(--ink-dimmer)' : ''}">${displayTitle}</p>
+            ${isNow ? '<span class="now-badge shrink-0 flex items-center gap-1"><span class="pulse-dot"></span>NOW</span>' : ''}
+            ${ov ? '<span class="swapped-tag shrink-0">Swapped</span>' : ''}
+          </div>
+          ${ov ? `<p class="text-[11px] mt-0.5 line-through" style="color:var(--ink-dimmer)">${item.title}</p>` : ''}
+          <div class="flex items-center gap-2 mt-0.5">
+            <p class="text-[11px] font-mono" style="color:var(--ink-dimmer)">${item.time}</p>
+            ${isNow ? `<p id="countdown-${item.id}" class="text-[11px] font-mono" style="color:var(--ink-dim)"></p>` : ''}
+          </div>
+        </div>
+        <button class="edit-block-btn glass shrink-0" data-block="${item.id}" data-title="${item.title.replace(/"/g, '&quot;')}">
+          ${ICONS.edit}
+        </button>
+      </div>`;
+                });
+            });
+
+            html += renderWeekHistory(await getWeekCompletionData());
+            container.innerHTML = `<div id="timetableLeftCol">${html}</div><div id="desktopCalendarPanel" class="desktop-cal-panel"></div>`;
+            tickCountdowns();
+            renderDesktopCalendarPanel();
+
+            document.querySelectorAll('.checkbox-toggle').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const blockId = btn.dataset.block;
+                    const prog = await getStore('timetable:' + todayKey(), {});
+                    prog[blockId] = !prog[blockId];
+                    await setStore('timetable:' + todayKey(), prog);
+                    gsap.fromTo(btn, { scale: 0.7 }, { scale: 1, duration: 0.35, ease: 'back.out(2)' });
+                    if (prog[blockId]) celebrateBlockDone(btn);
+                    sheetsCall('toggleBlock', { date: todayKey(), block: blockId, completed: prog[blockId] });
+                    renderTimetable();
+                });
+            });
+            document.querySelectorAll('.edit-block-btn').forEach(btn => {
+                btn.addEventListener('click', () => openOverride(btn.dataset.block, btn.dataset.title));
+            });
+        }
+
+        /* ================= Desktop calendar + history panel =================
+           Only visible at >=900px (see .desktop-cal-panel CSS) — right-hand
+           pane of the Timetable tab on desktop/tablet. Shows a real
+           calendar grid (schedule completion % per day) plus a combined,
+           clickable feed of past Reflections and Checkins. Clicking a day
+           filters the feed to that day; clicking a card expands its full
+           answers. This intentionally does NOT replace the mobile Month
+           Report modal — that's still used on narrow screens. */
+        let desktopCalOffset = 0;
+        let desktopCalSelectedDate = null;
+        function desktopCalMonthDate(offset) {
+            const d = new Date();
+            d.setDate(1);
+            d.setMonth(d.getMonth() + offset);
+            return d;
+        }
+        async function gatherHistoryForMonth(year, month, daysInMonth) {
+            const entries = [];
+            const tasks = await loadTasksCache();
+            tasks.forEach(t => {
+                if (!t.reflection) return;
+                const d = new Date(t.updatedAt || t.createdAt || Date.now());
+                if (d.getFullYear() !== year || d.getMonth() !== month) return;
+                entries.push({
+                    type: 'reflection', date: localDateKey(d), timestamp: t.updatedAt || t.createdAt,
+                    title: `${t.clientId} — ${t.description}`, mood: t.reflection.quality || '',
+                    qa: [
+                        ['How it went', t.reflection.quality], ['Delivered', t.reflection.delivered],
+                        ['Blockers', t.reflection.blockers], ['Follow-up needed', t.reflection.followUp],
+                        ['Confidence', t.reflection.confidence], ['Notes', t.reflection.notes]
+                    ].filter(([, v]) => v !== undefined && v !== '')
+                });
+            });
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = dateKeyFor(year, month, day);
+                const dayCheckins = await getStore('checkins:' + dateStr, {});
+                Object.keys(dayCheckins).forEach(blockId => {
+                    const c = dayCheckins[blockId];
+                    const block = SCHEDULE.find(b => b.id === blockId);
+                    entries.push({
+                        type: 'checkin', date: dateStr, timestamp: dateStr,
+                        title: block ? block.title : blockId, mood: c.mood || '',
+                        qa: [
+                            ['Mood', c.mood], ['On track', c.onTrack], ['Focus', c.focus],
+                            ['Energy', c.energy != null ? c.energy + '/5' : ''], ['Blocker', c.blocker], ['Notes', c.notes]
+                        ].filter(([, v]) => v !== undefined && v !== '')
+                    });
+                });
+            }
+            entries.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
+            return entries;
+        }
+        function renderHistoryFeedHtml(entries) {
+            if (!entries.length) {
+                return `<p class="text-xs" style="color:var(--ink-dimmer)">No reflections or check-ins ${desktopCalSelectedDate ? 'on this day' : 'this month'} yet.</p>`;
+            }
+            return entries.map((e, i) => `
+      <div class="history-card" data-idx="${i}">
+        <div class="flex items-center gap-2.5">
+          <div class="history-card-icon">${ICONS[e.type]}</div>
+          <div class="flex-1 min-w-0">
+            <p class="text-xs font-medium truncate">${e.title}</p>
+            <p class="text-[10px] font-mono mt-0.5" style="color:var(--ink-dimmer)">${e.date} · ${e.type === 'reflection' ? 'Reflection' : 'Check-in'}</p>
+          </div>
+          <span class="shrink-0">${moodIconFor(e.mood)}</span>
+        </div>
+        <div class="history-card-body hidden mt-3">
+          ${e.qa.map(([label, val]) => `<div class="history-qa-row"><span style="color:var(--ink-dimmer)">${label}</span><span class="text-right" style="max-width:60%">${val}</span></div>`).join('')}
+        </div>
+      </div>`).join('');
+        }
+        async function renderDesktopCalendarPanel() {
+            // Skip the work entirely on mobile widths — this pane is hidden there.
+            if (!(window.matchMedia && window.matchMedia('(min-width: 900px)').matches)) return;
+            const panel = document.getElementById('desktopCalendarPanel');
+            if (!panel) return;
+
+            const base = desktopCalMonthDate(desktopCalOffset);
+            const year = base.getFullYear(), month = base.getMonth();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const firstWeekday = new Date(year, month, 1).getDay();
+            const todayStr = todayKey();
+
+            const dayPct = {};
+            const dayHasHistory = {};
+            for (let d = 1; d <= daysInMonth; d++) {
+                const k = dateKeyFor(year, month, d);
+                const prog = await getStore('timetable:' + k, {});
+                const done = SCHEDULE.filter(item => prog[item.id]).length;
+                dayPct[k] = SCHEDULE.length ? Math.round((done / SCHEDULE.length) * 100) : 0;
+                const checkins = await getStore('checkins:' + k, {});
+                dayHasHistory[k] = Object.keys(checkins).length > 0;
+            }
+            const tasks = await loadTasksCache();
+            tasks.forEach(t => {
+                if (!t.reflection) return;
+                const d = new Date(t.updatedAt || t.createdAt || Date.now());
+                if (d.getFullYear() === year && d.getMonth() === month) dayHasHistory[localDateKey(d)] = true;
+            });
+
+            let cellsHtml = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(w => `<div class="cal-weekday">${w}</div>`).join('');
+            for (let i = 0; i < firstWeekday; i++) cellsHtml += `<div class="cal-day is-empty"></div>`;
+            for (let d = 1; d <= daysInMonth; d++) {
+                const k = dateKeyFor(year, month, d);
+                const pct = dayPct[k] || 0;
+                cellsHtml += `
+      <div class="cal-day ${k === todayStr ? 'is-today' : ''} ${k === desktopCalSelectedDate ? 'is-selected' : ''}" data-date="${k}">
+        ${dayHasHistory[k] ? '<span class="cal-day-dot"></span>' : ''}
+        <span class="cal-day-num">${d}</span>
+        <span class="cal-day-bar"><span class="cal-day-bar-fill" style="width:${pct}%"></span></span>
+      </div>`;
+            }
+
+            const entries = await gatherHistoryForMonth(year, month, daysInMonth);
+            const filtered = desktopCalSelectedDate ? entries.filter(e => e.date === desktopCalSelectedDate) : entries;
+
+            panel.innerHTML = `
+      <div class="glass rounded-2xl p-4">
+        <div class="flex items-center justify-between mb-3">
+          <button id="calPrevMonth" class="glass rounded-full w-8 h-8 flex items-center justify-center active:scale-90 transition-transform">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <p class="font-display text-sm font-medium">${base.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</p>
+          <button id="calNextMonth" class="glass rounded-full w-8 h-8 flex items-center justify-center active:scale-90 transition-transform ${desktopCalOffset >= 0 ? 'opacity-30 pointer-events-none' : ''}">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+        </div>
+        <div class="cal-grid">${cellsHtml}</div>
+      </div>
+      <div class="mt-5">
+        <div class="flex items-center justify-between mb-2.5">
+          <p class="text-[11px] uppercase tracking-[0.18em] font-mono" style="color:var(--ink-dimmer)">
+            ${desktopCalSelectedDate ? 'Reflections & check-ins — ' + desktopCalSelectedDate : 'Reflections & check-ins this month'}
+          </p>
+          ${desktopCalSelectedDate ? `<button id="calClearFilter" class="text-[11px] font-mono underline underline-offset-2" style="color:var(--ink-dim)">Clear</button>` : ''}
+        </div>
+        ${renderHistoryFeedHtml(filtered)}
+      </div>`;
+
+            panel.querySelectorAll('.cal-day[data-date]').forEach(el => {
+                el.addEventListener('click', () => {
+                    const k = el.dataset.date;
+                    desktopCalSelectedDate = (desktopCalSelectedDate === k) ? null : k;
+                    renderDesktopCalendarPanel();
+                });
+            });
+            const clearBtn = document.getElementById('calClearFilter');
+            if (clearBtn) clearBtn.addEventListener('click', () => { desktopCalSelectedDate = null; renderDesktopCalendarPanel(); });
+            const prevBtn = document.getElementById('calPrevMonth');
+            if (prevBtn) prevBtn.addEventListener('click', () => { desktopCalOffset--; desktopCalSelectedDate = null; renderDesktopCalendarPanel(); });
+            const nextBtn = document.getElementById('calNextMonth');
+            if (nextBtn) nextBtn.addEventListener('click', () => { if (desktopCalOffset < 0) { desktopCalOffset++; desktopCalSelectedDate = null; renderDesktopCalendarPanel(); } });
+            panel.querySelectorAll('.history-card').forEach(card => {
+                card.addEventListener('click', () => card.querySelector('.history-card-body').classList.toggle('hidden'));
+            });
+        }
+
+        async function getWeekCompletionData() {
+            const keys = dateKeysBack(7);
+            const data = [];
+            for (const k of keys) {
+                const prog = await getStore('timetable:' + k, {});
+                const done = SCHEDULE.filter(i => prog[i.id]).length;
+                data.push({ date: k, pct: Math.round((done / SCHEDULE.length) * 100) });
+            }
+            return data;
+        }
+        function computeStreak(weekData) {
+            let streak = 0;
+            for (let i = weekData.length - 1; i >= 0; i--) { if (weekData[i].pct >= 60) streak++; else break; }
+            return streak;
+        }
+        function renderWeekHistory(weekData) {
+            const streak = computeStreak(weekData);
+            const dayLetters = weekData.map(d => new Date(d.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' })[0]);
+            const bars = weekData.map((d, i) => `
+    <div class="flex-1 flex flex-col items-center gap-1.5">
+      <div class="week-bar h-16 w-full flex items-end"><div class="week-bar-fill" style="height:${Math.max(d.pct, 3)}%"></div></div>
+      <span class="text-[9px] font-mono" style="color:var(--ink-dimmer)">${dayLetters[i]}</span>
+    </div>`).join('');
+            return `
+    <p class="text-[11px] uppercase tracking-[0.18em] font-mono mt-7 mb-2.5" style="color:var(--ink-dimmer)">This week</p>
+    <div class="glass rounded-2xl px-4 py-4">
+      <div class="flex justify-between items-center mb-3.5">
+        <p class="text-xs" style="color:var(--ink-dim)">Last 7 days</p>
+        <p class="font-mono text-xs font-medium">${streak > 0 ? streak + '-day streak' : 'No streak yet'}</p>
+      </div>
+      <div class="flex gap-2">${bars}</div>
+    </div>`;
+        }
+
+        /* ================= Client Tasks ================= */
+        let tasksCache = null;
+        async function loadTasksCache() { if (tasksCache === null) tasksCache = await getStore('client-tasks', []); return tasksCache; }
+        async function persistTasksCache() { await setStore('client-tasks', tasksCache); }
+
+        const STATUS_ORDER = ['not-started', 'in-progress', 'done'];
+        const STATUS_META = {
+            'not-started': { label: 'Not started', icon: 'calendar', css: '' },
+            'in-progress': { label: 'In progress', icon: 'clock', css: '' },
+            'done': { label: 'Completed', icon: 'check', css: 'is-done' }
+        };
+        function normalizedStatus(task) {
+            if (task.status && STATUS_META[task.status]) return task.status;
+            if (task.completed) return 'done';
+            const today = todayKey();
+            return (today >= task.startDate && today <= task.endDate) ? 'in-progress' : 'not-started';
+        }
+        function taskStatus(task) {
+            const status = normalizedStatus(task);
+            const today = todayKey();
+            if (status !== 'done' && today > task.endDate) return { label: 'Overdue', icon: 'alert', css: 'is-overdue', status };
+            return { ...STATUS_META[status], status };
+        }
+        function defaultStatusForDates(startDate, endDate) {
+            const today = todayKey();
+            if (!startDate || !endDate) return 'not-started';
+            return (today >= startDate && today <= endDate) ? 'in-progress' : 'not-started';
+        }
+        const ICONS = {
+            check: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>',
+            calendar: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
+            alert: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 9v4M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>',
+            clock: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+            edit: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
+            trash: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6"/></svg>',
+            reflection: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+            checkin: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
+            moodGreat: '<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="12" r="10"/></svg>',
+            moodOkay: '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9" stroke-dasharray="14 8"/></svg>',
+            moodLow: '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>'
+        };
+        function moodIconFor(value) {
+            const v = (value || '').toLowerCase();
+            if (v.includes('great') || v === 'yes' || v === 'fully focused') return ICONS.moodGreat;
+            if (v.includes('okay') || v.includes('partial') || v.includes('bit more') || v.includes('some')) return ICONS.moodOkay;
+            return ICONS.moodLow;
+        }
+        function taskTotalMinutes(task) { return (task.timeLog || []).reduce((s, e) => s + e.minutes, 0); }
+        function weekMinutesForTasks(tasks) {
+            const keys = new Set(dateKeysBack(7));
+            let total = 0;
+            tasks.forEach(t => (t.timeLog || []).forEach(e => { if (keys.has(e.date)) total += e.minutes; }));
+            return total;
+        }
+
+        async function renderClientTasks() {
+            const container = document.getElementById('view-clients');
+            const tasks = await loadTasksCache();
+            const sorted = [...tasks].sort((a, b) => b.startDate.localeCompare(a.startDate));
+            const active = tasks.filter(t => normalizedStatus(t) !== 'done').length;
+            const weekMinutes = weekMinutesForTasks(tasks);
+
+            let statsHtml = `
+    <div class="flex gap-2.5 mb-5">
+      <div class="glass rounded-2xl px-3.5 py-3 flex-1"><p class="font-mono text-lg font-semibold">${tasks.length}</p><p class="text-[9.5px] uppercase tracking-wider mt-0.5" style="color:var(--ink-dimmer)">Total</p></div>
+      <div class="glass rounded-2xl px-3.5 py-3 flex-1"><p class="font-mono text-lg font-semibold">${active}</p><p class="text-[9.5px] uppercase tracking-wider mt-0.5" style="color:var(--ink-dimmer)">Active</p></div>
+      <div class="glass rounded-2xl px-3.5 py-3 flex-1"><p class="font-mono text-lg font-semibold">${minutesToLabel(weekMinutes)}</p><p class="text-[9.5px] uppercase tracking-wider mt-0.5" style="color:var(--ink-dimmer)">This week</p></div>
+    </div>`;
+
+            if (sorted.length === 0) {
+                statsHtml += `<div class="glass rounded-2xl px-5 py-10 text-center"><p class="text-sm" style="color:var(--ink-dim)">No client tasks yet.</p><p class="text-xs mt-1" style="color:var(--ink-dimmer)">Tap the + button to log your first one.</p></div>`;
+                container.innerHTML = statsHtml;
+                return;
+            }
+
+            let listHtml = '<div class="client-tasks-grid">';
+            sorted.forEach(task => {
+                const status = taskStatus(task);
+                const totalMin = taskTotalMinutes(task);
+                listHtml += `
+    <div class="glass rounded-2xl px-4 py-3.5 mb-2.5" data-task="${task.id}">
+      <div class="flex items-start justify-between gap-2">
+        <div class="min-w-0">
+          <p class="font-mono text-[11px]" style="color:var(--ink-dimmer)">${task.clientId}</p>
+          <p class="text-sm font-medium mt-0.5 leading-snug ${status.status === 'done' ? 'line-through' : ''}" style="${status.status === 'done' ? 'color:var(--ink-dimmer)' : ''}">${task.description}</p>
+        </div>
+        <div class="relative task-menu-wrap shrink-0">
+          <button class="task-menu-btn glass rounded-full w-8 h-8 flex items-center justify-center active:scale-90 transition-transform" data-id="${task.id}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+          </button>
+          <div class="task-menu hidden absolute right-0 top-9 z-20 glass-strong rounded-xl w-28 overflow-hidden">
+            <button class="edit-task w-full text-left px-3 py-2.5 text-xs flex items-center gap-2" data-id="${task.id}">${ICONS.edit} Edit</button>
+            <button class="delete-task w-full text-left px-3 py-2.5 text-xs flex items-center gap-2" style="border-top:1px solid var(--glass-border)" data-id="${task.id}">${ICONS.trash} Delete</button>
+          </div>
+        </div>
+      </div>
+      <div class="flex items-center justify-between mt-3 pt-3" style="border-top:1px solid var(--glass-border)">
+        <p class="font-mono text-[11px]" style="color:var(--ink-dimmer)">${relativeDateLabel(task)}</p>
+        <button class="status-pill cycle-status ${status.css}" data-id="${task.id}">${ICONS[status.icon]} ${status.label}</button>
+      </div>
+      <div class="flex items-center justify-between mt-3 pt-3" style="border-top:1px solid var(--glass-border)">
+        <p class="font-mono text-[11px]" style="color:var(--ink-dim)">${minutesToLabel(totalMin)} logged</p>
+        <button class="log-time-open quick-log-btn" data-id="${task.id}">+ Log time</button>
+      </div>
+    </div>`;
+            });
+            listHtml += '</div>';
+
+            container.innerHTML = statsHtml + listHtml;
+
+            container.querySelectorAll('.cycle-status').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const tasks = await loadTasksCache();
+                    const t = tasks.find(x => x.id === btn.dataset.id);
+                    if (!t) return;
+                    const cur = normalizedStatus(t);
+                    const next = STATUS_ORDER[(STATUS_ORDER.indexOf(cur) + 1) % STATUS_ORDER.length];
+                    t.status = next; t.completed = next === 'done';
+                    t.updatedAt = new Date().toISOString();
+                    await persistTasksCache();
+                    sheetsCall('upsertTask', { id: t.id, clientId: t.clientId, description: t.description, startDate: t.startDate, endDate: t.endDate, status: next, totalMinutes: taskTotalMinutes(t) });
+                    gsap.fromTo(btn, { scale: 0.9 }, { scale: 1, duration: 0.3, ease: 'back.out(2)' });
+                    if (next === 'done') celebrateTaskDone(btn);
+                    renderClientTasks();
+                    if (next === 'done') openReflection(t);
+                });
+            });
+            container.querySelectorAll('.log-time-open').forEach(btn => btn.addEventListener('click', () => openLogTime(btn.dataset.id)));
+            container.querySelectorAll('.task-menu-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const menu = btn.nextElementSibling;
+                    document.querySelectorAll('.task-menu').forEach(m => { if (m !== menu) m.classList.add('hidden'); });
+                    menu.classList.toggle('hidden');
+                });
+            });
+            container.querySelectorAll('.edit-task').forEach(btn => {
+                btn.addEventListener('click', async () => { const tasks = await loadTasksCache(); const t = tasks.find(x => x.id === btn.dataset.id); if (t) openModal(t); });
+            });
+            container.querySelectorAll('.delete-task').forEach(btn => {
+                btn.addEventListener('click', async () => { await deleteTaskWithUndo(btn.dataset.id); });
+            });
+        }
+
+        /* ================= Delete with undo ================= */
+        let pendingDelete = null;
+        let toastTimeout = null;
+        async function deleteTaskWithUndo(id) {
+            const tasks = await loadTasksCache();
+            const idx = tasks.findIndex(t => t.id === id);
+            if (idx === -1) return;
+            const [removed] = tasks.splice(idx, 1);
+            await persistTasksCache();
+            sheetsCall('deleteTask', { id });
+            pendingDelete = { task: removed, index: idx };
+            renderClientTasks();
+            showToast('Task deleted');
+        }
+        function showToast(msg) {
+            document.getElementById('toastMsg').textContent = msg;
+            const wrap = document.getElementById('toastWrap');
+            const toast = document.getElementById('toast');
+            wrap.classList.remove('hidden');
+            gsap.fromTo(toast, { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: 'power3.out' });
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(hideToast, 5000);
+        }
+        function hideToast() {
+            const wrap = document.getElementById('toastWrap');
+            const toast = document.getElementById('toast');
+            gsap.to(toast, { y: 20, opacity: 0, duration: 0.25, ease: 'power2.in', onComplete: () => { wrap.classList.add('hidden'); pendingDelete = null; } });
+        }
+
+        /* ================= Task modal (create + edit) ================= */
+        let editingTaskId = null;
+        let selectedStatus = 'not-started';
+        function setStatusUI(status) {
+            selectedStatus = status;
+            document.querySelectorAll('.status-option').forEach(b => b.classList.toggle('active', b.dataset.status === status));
+        }
+        function openModal(task) {
+            editingTaskId = task ? task.id : null;
+            document.getElementById('modalTitle').textContent = task ? 'Edit client task' : 'New client task';
+            document.getElementById('saveTaskBtn').textContent = task ? 'Update task' : 'Save task';
+            document.getElementById('inputClientId').value = task ? task.clientId : '';
+            document.getElementById('inputDescription').value = task ? task.description : '';
+            document.getElementById('inputStart').value = task ? task.startDate : '';
+            document.getElementById('inputEnd').value = task ? task.endDate : '';
+            document.getElementById('statusSection').classList.toggle('hidden', !task);
+            if (task) setStatusUI(normalizedStatus(task));
+            const overlay = document.getElementById('modalOverlay');
+            overlay.classList.remove('hidden'); overlay.classList.add('flex');
+            gsap.fromTo('#modalCard', { y: 40, opacity: 0, scale: 0.96 }, { y: 0, opacity: 1, scale: 1, duration: 0.35, ease: 'power3.out' });
+        }
+        function closeModal() {
+            gsap.to('#modalCard', {
+                y: 20, opacity: 0, scale: 0.96, duration: 0.2, onComplete: () => {
+                    document.getElementById('modalOverlay').classList.add('hidden');
+                    document.getElementById('modalOverlay').classList.remove('flex');
+                    document.getElementById('modalError').classList.add('hidden');
+                    editingTaskId = null;
+                }
+            });
+        }
+        async function saveTask() {
+            const clientId = document.getElementById('inputClientId').value.trim();
+            const description = document.getElementById('inputDescription').value.trim();
+            const startDate = document.getElementById('inputStart').value;
+            const endDate = document.getElementById('inputEnd').value;
+            const errEl = document.getElementById('modalError');
+            if (!clientId || !description || !startDate || !endDate) { errEl.textContent = 'Please fill in every field.'; errEl.classList.remove('hidden'); return; }
+            if (endDate < startDate) { errEl.textContent = 'End date must be after start date.'; errEl.classList.remove('hidden'); return; }
+
+            const tasks = await loadTasksCache();
+            const status = editingTaskId ? selectedStatus : defaultStatusForDates(startDate, endDate);
+            const nowIso = new Date().toISOString();
+            let taskRef;
+            if (editingTaskId) {
+                taskRef = tasks.find(x => x.id === editingTaskId);
+                if (taskRef) Object.assign(taskRef, { clientId, description, startDate, endDate, status, completed: status === 'done', updatedAt: nowIso });
+            } else {
+                taskRef = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), clientId, description, startDate, endDate, status, completed: status === 'done', timeLog: [], createdAt: nowIso, updatedAt: nowIso };
+                tasks.push(taskRef);
+            }
+            await persistTasksCache();
+            sheetsCall('upsertTask', { id: taskRef.id, clientId, description, startDate, endDate, status, totalMinutes: taskTotalMinutes(taskRef) });
+            closeModal();
+            renderClientTasks();
+        }
+
+        /* ================= Log Time modal ================= */
+        let activeLogTaskId = null;
+        async function logMinutesToTask(taskId, minutes) {
+            const tasks = await loadTasksCache();
+            const t = tasks.find(x => x.id === taskId);
+            if (!t || !minutes || minutes <= 0) return null;
+            t.timeLog = t.timeLog || [];
+            const entry = t.timeLog.find(e => e.date === todayKey());
+            if (entry) entry.minutes += minutes; else t.timeLog.push({ date: todayKey(), minutes });
+            t.updatedAt = new Date().toISOString();
+            await persistTasksCache();
+            sheetsCall('upsertTask', { id: t.id, clientId: t.clientId, description: t.description, startDate: t.startDate, endDate: t.endDate, status: normalizedStatus(t), totalMinutes: taskTotalMinutes(t) });
+            return t;
+        }
+        async function openLogTime(taskId) {
+            activeLogTaskId = taskId;
+            const tasks = await loadTasksCache();
+            const t = tasks.find(x => x.id === taskId);
+            document.getElementById('logTimeTotal').textContent = minutesToLabel(taskTotalMinutes(t || {})) + ' logged so far';
+            document.getElementById('customMinutesInput').value = '';
+            const overlay = document.getElementById('logTimeOverlay');
+            overlay.classList.remove('hidden'); overlay.classList.add('flex');
+            gsap.fromTo(overlay.firstElementChild, { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3, ease: 'power3.out' });
+        }
+        function closeLogTime() {
+            document.getElementById('logTimeOverlay').classList.add('hidden');
+            document.getElementById('logTimeOverlay').classList.remove('flex');
+            activeLogTaskId = null;
+            renderClientTasks();
+        }
+
+        /* ================= Swap / Override modal ================= */
+        let activeOverrideBlockId = null;
+        let activeOverridePlannedTitle = null;
+        let selectedOverrideTaskId = null;
+
+        function blockDurationMinutes(blockId) {
+            const b = SCHEDULE.find(x => x.id === blockId);
+            return b ? Math.max(0, b.end - b.start) : 0;
+        }
+
+        /**
+         * Adds (or, with a negative delta, removes) minutes from a task's
+         * timeLog entry for a specific date. Used to log a swapped block's
+         * duration against a linked client task, and to cleanly reverse
+         * that same amount if the link is changed or cleared later —
+         * unlike logMinutesToTask() (used by the manual +15m/+30m/custom
+         * Log Time modal), this never lets an entry go negative and
+         * removes the entry entirely once it nets to zero.
+         */
+        async function adjustTaskMinutesForDate(taskId, date, deltaMinutes) {
+            if (!taskId || !deltaMinutes) return;
+            const tasks = await loadTasksCache();
+            const t = tasks.find(x => x.id === taskId);
+            if (!t) return;
+            t.timeLog = t.timeLog || [];
+            const entry = t.timeLog.find(e => e.date === date);
+            if (entry) {
+                entry.minutes = Math.max(0, entry.minutes + deltaMinutes);
+                if (entry.minutes === 0) t.timeLog = t.timeLog.filter(e => e !== entry);
+            } else if (deltaMinutes > 0) {
+                t.timeLog.push({ date, minutes: deltaMinutes });
+            }
+            t.updatedAt = new Date().toISOString();
+            await persistTasksCache();
+            sheetsCall('upsertTask', { id: t.id, clientId: t.clientId, description: t.description, startDate: t.startDate, endDate: t.endDate, status: normalizedStatus(t), totalMinutes: taskTotalMinutes(t) });
+        }
+
+        async function renderOverrideTaskList() {
+            const tasks = await loadTasksCache();
+            const active = tasks.filter(t => normalizedStatus(t) !== 'done')
+                .sort((a, b) => b.startDate.localeCompare(a.startDate));
+            const wrap = document.getElementById('overrideTaskList');
+            const durationMin = blockDurationMinutes(activeOverrideBlockId);
+            if (!active.length) {
+                wrap.innerHTML = `<p class="text-[11px]" style="color:var(--ink-dimmer)">No active client tasks yet.</p>`;
+                return;
+            }
+            wrap.innerHTML = active.map(t => `
+      <button type="button" class="override-task-row ${selectedOverrideTaskId === t.id ? 'active' : ''}" data-id="${t.id}">
+        <span class="override-task-label"><span class="font-mono" style="color:var(--ink-dimmer)">${t.clientId}</span> — ${t.description}</span>
+        <span class="override-task-hours">${minutesToLabel(durationMin)}</span>
+      </button>`).join('');
+            wrap.querySelectorAll('.override-task-row').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.dataset.id;
+                    selectedOverrideTaskId = (selectedOverrideTaskId === id) ? null : id;
+                    if (selectedOverrideTaskId) {
+                        const t = active.find(x => x.id === selectedOverrideTaskId);
+                        if (t) document.getElementById('overrideInput').value = `${t.clientId} — ${t.description}`;
+                    }
+                    renderOverrideTaskList();
+                });
+            });
+        }
+
+        async function openOverride(blockId, plannedTitle) {
+            activeOverrideBlockId = blockId;
+            activeOverridePlannedTitle = plannedTitle;
+            const overrides = await getStore('override:' + todayKey(), {});
+            const existing = overrides[blockId];
+            selectedOverrideTaskId = (existing && existing.taskId) ? existing.taskId : null;
+            document.getElementById('overridePlanned').textContent = 'Planned: ' + plannedTitle;
+            document.getElementById('overrideBlockDuration').textContent = 'Block duration: ' + minutesToLabel(blockDurationMinutes(blockId));
+            document.getElementById('overrideInput').value = existing ? existing.actualTitle : '';
+            await renderOverrideTaskList();
+            const overlay = document.getElementById('overrideOverlay');
+            overlay.classList.remove('hidden'); overlay.classList.add('flex');
+            gsap.fromTo(overlay.firstElementChild, { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3, ease: 'power3.out' });
+        }
+        function closeOverride() {
+            document.getElementById('overrideOverlay').classList.add('hidden');
+            document.getElementById('overrideOverlay').classList.remove('flex');
+            activeOverrideBlockId = null;
+            selectedOverrideTaskId = null;
+        }
+        async function saveOverride() {
+            if (!activeOverrideBlockId) return;
+            const overrides = await getStore('override:' + todayKey(), {});
+            const existing = overrides[activeOverrideBlockId];
+            const typed = document.getElementById('overrideInput').value.trim();
+
+            let taskLabel = '';
+            if (selectedOverrideTaskId) {
+                const tasks = await loadTasksCache();
+                const t = tasks.find(x => x.id === selectedOverrideTaskId);
+                if (t) taskLabel = `${t.clientId} — ${t.description}`;
+            }
+            const val = typed || taskLabel;
+            if (!val) { closeOverride(); return; }
+
+            const durationMin = blockDurationMinutes(activeOverrideBlockId);
+            const prevTaskId = (existing && existing.taskId) ? existing.taskId : null;
+            const prevLogged = (existing && existing.loggedMinutes) ? existing.loggedMinutes : 0;
+
+            // Only re-log if the linked task actually changed — resaving
+            // with the same link (e.g. just editing the note text) must
+            // not double-count the block's duration.
+            let newLoggedMinutes = prevLogged;
+            if (selectedOverrideTaskId !== prevTaskId) {
+                if (prevTaskId && prevLogged) await adjustTaskMinutesForDate(prevTaskId, todayKey(), -prevLogged);
+                newLoggedMinutes = 0;
+                if (selectedOverrideTaskId) {
+                    await adjustTaskMinutesForDate(selectedOverrideTaskId, todayKey(), durationMin);
+                    newLoggedMinutes = durationMin;
+                }
+            }
+
+            overrides[activeOverrideBlockId] = {
+                actualTitle: val, plannedTitle: activeOverridePlannedTitle,
+                taskId: selectedOverrideTaskId || null, loggedMinutes: newLoggedMinutes,
+                updatedAt: new Date().toISOString()
+            };
+            await setStore('override:' + todayKey(), overrides);
+            const progress = await getStore('timetable:' + todayKey(), {});
+            sheetsCall('logOverride', { date: todayKey(), block: activeOverrideBlockId, plannedTitle: activeOverridePlannedTitle, actualTitle: val, completed: !!progress[activeOverrideBlockId] });
+            closeOverride();
+            renderTimetable();
+            renderClientTasks();
+        }
+        async function clearOverride() {
+            if (!activeOverrideBlockId) return;
+            const overrides = await getStore('override:' + todayKey(), {});
+            const existing = overrides[activeOverrideBlockId];
+            if (existing && existing.taskId && existing.loggedMinutes) {
+                await adjustTaskMinutesForDate(existing.taskId, todayKey(), -existing.loggedMinutes);
+            }
+            delete overrides[activeOverrideBlockId];
+            await setStore('override:' + todayKey(), overrides);
+            const progress = await getStore('timetable:' + todayKey(), {});
+            sheetsCall('logOverride', { date: todayKey(), block: activeOverrideBlockId, plannedTitle: activeOverridePlannedTitle, actualTitle: '', completed: !!progress[activeOverrideBlockId] });
+            closeOverride();
+            renderTimetable();
+            renderClientTasks();
+        }
+
+        /* ================= Reflection wizard ================= */
+        const REFLECTION_STEPS = [
+            { key: 'quality', prompt: 'How did this task go?', type: 'choice', options: ['Great', 'Okay', 'Tough'] },
+            { key: 'delivered', prompt: 'Delivered everything scoped?', type: 'choice', options: ['Yes', 'Partially', 'No'] },
+            { key: 'blockers', prompt: 'Any blockers along the way?', type: 'choice', options: ['None', 'Waiting on client', 'Technical issue', 'Other'] },
+            { key: 'followUp', prompt: 'Does this need follow-up?', type: 'choice', options: ['Yes', 'No'] },
+            { key: 'confidence', prompt: 'How confident are you the client will be happy?', type: 'scale' },
+            { key: 'notes', prompt: 'Anything worth remembering?', type: 'text' }
+        ];
+        let reflectionTask = null, reflectionAnswers = {}, reflectionStepIdx = 0;
+        function openReflection(task) {
+            reflectionTask = task; reflectionAnswers = {}; reflectionStepIdx = 0;
+            const overlay = document.getElementById('reflectionOverlay');
+            overlay.classList.remove('hidden'); overlay.classList.add('flex');
+            gsap.fromTo(overlay.firstElementChild, { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3, ease: 'power3.out' });
+            renderReflectionStep(1);
+        }
+        function renderReflectionStep(dir) {
+            const step = REFLECTION_STEPS[reflectionStepIdx];
+            const body = document.getElementById('reflectionBody');
+            let html = `<p class="text-base font-medium mb-4">${step.prompt}</p>`;
+            if (step.type === 'choice') {
+                html += `<div class="flex flex-col gap-2">` + step.options.map(o => `<button class="reflection-choice glass rounded-xl py-3 text-sm ${reflectionAnswers[step.key] === o ? 'active' : ''}" data-value="${o}">${o}</button>`).join('') + `</div>`;
+            } else if (step.type === 'scale') {
+                html += `<div class="flex gap-2 justify-between">` + [1, 2, 3, 4, 5].map(n => `<button class="reflection-scale glass rounded-full w-11 h-11 flex items-center justify-center font-mono text-sm ${reflectionAnswers[step.key] === n ? 'active' : ''}" data-value="${n}">${n}</button>`).join('') + `</div>`;
+            } else if (step.type === 'text') {
+                html += `<textarea id="reflectionNotes" rows="3" placeholder="Optional notes..." class="w-full bg-transparent border-b border-white/15 focus:border-white/50 outline-none py-2 text-sm resize-none placeholder:text-white/25">${reflectionAnswers[step.key] || ''}</textarea>`;
+            }
+            body.innerHTML = html;
+            gsap.fromTo(body, { x: dir > 0 ? 24 : -24, opacity: 0 }, { x: 0, opacity: 1, duration: 0.28, ease: 'power2.out' });
+
+            body.querySelectorAll('.reflection-choice').forEach(btn => btn.addEventListener('click', () => { reflectionAnswers[step.key] = btn.dataset.value; nextReflectionStep(); }));
+            body.querySelectorAll('.reflection-scale').forEach(btn => btn.addEventListener('click', () => { reflectionAnswers[step.key] = parseInt(btn.dataset.value, 10); nextReflectionStep(); }));
+
+            document.getElementById('reflectionNextBtn').textContent = reflectionStepIdx === REFLECTION_STEPS.length - 1 ? 'Finish' : 'Skip';
+            document.getElementById('reflectionProgress').style.width = ((reflectionStepIdx + 1) / REFLECTION_STEPS.length * 100) + '%';
+        }
+        function nextReflectionStep() {
+            if (reflectionStepIdx < REFLECTION_STEPS.length - 1) { reflectionStepIdx++; renderReflectionStep(1); }
+            else finishReflection();
+        }
+        async function finishReflection() {
+            const lastStep = REFLECTION_STEPS[REFLECTION_STEPS.length - 1];
+            if (lastStep.type === 'text') {
+                const notesEl = document.getElementById('reflectionNotes');
+                if (notesEl) reflectionAnswers.notes = notesEl.value;
+            }
+            const tasks = await loadTasksCache();
+            const t = tasks.find(x => x.id === reflectionTask.id);
+            if (t) { t.reflection = reflectionAnswers; await persistTasksCache(); }
+            sheetsCall('saveReflection', { taskId: reflectionTask.id, clientId: reflectionTask.clientId, description: reflectionTask.description, ...reflectionAnswers });
+            closeReflection();
+        }
+        function closeReflection() {
+            document.getElementById('reflectionOverlay').classList.add('hidden');
+            document.getElementById('reflectionOverlay').classList.remove('flex');
+        }
+
+        /* ================= 5-minute check-in wizard =================
+           Auto-opens from fireAlarm() when a timetable block has 5
+           minutes left. Same wizard pattern as the reflection flow above,
+           but keyed to a schedule block + today's date rather than a
+           client task, and saved separately (locally + to a "Checkins"
+           tab in the Sheet) so it never collides with task reflections. */
+        const CHECKIN_STEPS = [
+            { key: 'mood', prompt: "How's this block going?", type: 'choice', options: ['Great', 'Okay', 'Struggling'] },
+            { key: 'onTrack', prompt: 'Will you finish on time?', type: 'choice', options: ['Yes', 'Need a bit more', 'No'] },
+            { key: 'focus', prompt: 'Staying focused?', type: 'choice', options: ['Fully focused', 'Some distractions', 'Lost focus'] },
+            { key: 'energy', prompt: 'Energy level right now?', type: 'scale' },
+            { key: 'blocker', prompt: 'Anything holding you back?', type: 'choice', options: ['Nothing', 'Interruption', 'Waiting on someone', 'Technical issue'] },
+            { key: 'notes', prompt: 'Anything worth noting?', type: 'text' }
+        ];
+        let checkinBlock = null, checkinAnswers = {}, checkinStepIdx = 0;
+        function openCheckin(block) {
+            checkinBlock = block; checkinAnswers = {}; checkinStepIdx = 0;
+            document.getElementById('checkinBlockTitle').textContent = block.title;
+            const overlay = document.getElementById('checkinOverlay');
+            overlay.classList.remove('hidden'); overlay.classList.add('flex');
+            gsap.fromTo(overlay.firstElementChild, { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3, ease: 'power3.out' });
+            renderCheckinStep(1);
+        }
+        function renderCheckinStep(dir) {
+            const step = CHECKIN_STEPS[checkinStepIdx];
+            const body = document.getElementById('checkinBody');
+            let html = `<p class="text-base font-medium mb-4">${step.prompt}</p>`;
+            if (step.type === 'choice') {
+                html += `<div class="flex flex-col gap-2">` + step.options.map(o => `<button class="reflection-choice glass rounded-xl py-3 text-sm ${checkinAnswers[step.key] === o ? 'active' : ''}" data-value="${o}">${o}</button>`).join('') + `</div>`;
+            } else if (step.type === 'scale') {
+                html += `<div class="flex gap-2 justify-between">` + [1, 2, 3, 4, 5].map(n => `<button class="reflection-scale glass rounded-full w-11 h-11 flex items-center justify-center font-mono text-sm ${checkinAnswers[step.key] === n ? 'active' : ''}" data-value="${n}">${n}</button>`).join('') + `</div>`;
+            } else if (step.type === 'text') {
+                html += `<textarea id="checkinNotes" rows="3" placeholder="Optional notes..." class="w-full bg-transparent border-b border-white/15 focus:border-white/50 outline-none py-2 text-sm resize-none placeholder:text-white/25">${checkinAnswers[step.key] || ''}</textarea>`;
+            }
+            body.innerHTML = html;
+            gsap.fromTo(body, { x: dir > 0 ? 24 : -24, opacity: 0 }, { x: 0, opacity: 1, duration: 0.28, ease: 'power2.out' });
+
+            body.querySelectorAll('.reflection-choice').forEach(btn => btn.addEventListener('click', () => { checkinAnswers[step.key] = btn.dataset.value; nextCheckinStep(); }));
+            body.querySelectorAll('.reflection-scale').forEach(btn => btn.addEventListener('click', () => { checkinAnswers[step.key] = parseInt(btn.dataset.value, 10); nextCheckinStep(); }));
+
+            document.getElementById('checkinNextBtn').textContent = checkinStepIdx === CHECKIN_STEPS.length - 1 ? 'Finish' : 'Skip';
+            document.getElementById('checkinProgress').style.width = ((checkinStepIdx + 1) / CHECKIN_STEPS.length * 100) + '%';
+        }
+        function nextCheckinStep() {
+            if (checkinStepIdx < CHECKIN_STEPS.length - 1) { checkinStepIdx++; renderCheckinStep(1); }
+            else finishCheckin();
+        }
+        async function finishCheckin() {
+            const lastStep = CHECKIN_STEPS[CHECKIN_STEPS.length - 1];
+            if (lastStep.type === 'text') {
+                const notesEl = document.getElementById('checkinNotes');
+                if (notesEl) checkinAnswers.notes = notesEl.value;
+            }
+            const date = todayKey();
+            const all = await getStore('checkins:' + date, {});
+            all[checkinBlock.id] = checkinAnswers;
+            await setStore('checkins:' + date, all);
+            sheetsCall('saveCheckin', { date, block: checkinBlock.id, blockTitle: checkinBlock.title, ...checkinAnswers });
+            closeCheckin();
+        }
+        function closeCheckin() {
+            document.getElementById('checkinOverlay').classList.add('hidden');
+            document.getElementById('checkinOverlay').classList.remove('flex');
+            checkinBlock = null;
+        }
+
+        /* ================= Profile ================= */
+        async function renderProfile() {
+            const container = document.getElementById('view-profile');
+            const profile = await getStore('profile', { name: 'Dini', photo: null });
+            const weekData = await getWeekCompletionData();
+            const nineDayKeys = dateKeysBack(9);
+            const nineDayData = [];
+            for (const k of nineDayKeys) {
+                const prog = await getStore('timetable:' + k, {});
+                const done = SCHEDULE.filter(i => prog[i.id]).length;
+                nineDayData.push({ date: k, pct: Math.round((done / SCHEDULE.length) * 100) });
+            }
+            const initial = (profile.name || 'D').trim()[0]?.toUpperCase() || 'D';
+
+            const grid = nineDayData.map(d => {
+                const label = new Date(d.date + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+                const filled = d.pct >= 60;
+                return `
+    <div class="glass rounded-2xl py-4 flex flex-col items-center gap-1.5">
+      <div class="w-11 h-11 rounded-full flex items-center justify-center font-mono text-[11px] ${filled ? 'bg-[var(--ink)] text-[var(--bg)]' : 'border border-white/20'}">${d.pct}%</div>
+      <span class="text-[9.5px] font-mono" style="color:var(--ink-dimmer)">${label}</span>
+    </div>`;
+            }).join('');
+
+            container.innerHTML = `
+    <div class="profile-grid">
+      <div class="glass rounded-2xl profile-card overflow-hidden">
+        <input type="file" id="photoInput" accept="image/*" class="hidden">
+        <div class="profile-photo-tilt" id="profilePhotoTilt">
+          <div class="profile-photo-shine"></div>
+          <button id="avatarBtn" class="profile-photo-btn">
+            ${profile.photo ? `<img id="avatarImg" class="profile-photo-img" src="${profile.photo}">` : `<span class="font-display text-5xl">${initial}</span>`}
+          </button>
+        </div>
+        <div class="px-4 py-4">
+          <h2 class="font-display text-base font-semibold">${profile.name || 'Dini'}</h2>
+          <p class="text-[11px] mt-0.5 mb-2.5" style="color:var(--ink-dimmer)">${computeStreak(weekData)}-day streak · tap photo to change</p>
+          <button id="togglePhotoUrlBtn" class="text-[11px] font-mono underline underline-offset-2" style="color:var(--ink-dim)">Use a photo URL instead</button>
+          <div id="photoUrlRow" class="hidden mt-2.5 flex gap-2">
+            <input id="photoUrlInput" type="text" placeholder="https://example.com/photo.jpg"
+              class="flex-1 min-w-0 bg-transparent border-b border-white/15 focus:border-white/50 outline-none py-2 text-xs font-mono placeholder:text-white/25">
+            <button id="savePhotoUrlBtn" class="quick-log-btn px-3 shrink-0">Save</button>
+          </div>
+        </div>
+      </div>
+      <div class="profile-stats-col">
+        <p class="text-[11px] uppercase tracking-[0.18em] font-mono mb-2.5" style="color:var(--ink-dimmer)">Last 9 days</p>
+        <div class="grid grid-cols-3 gap-2.5">${grid}</div>
+        <button id="openMonthReportBtn" class="w-full mt-5 glass rounded-2xl py-3 text-xs font-mono">View month report</button>
+        <p class="text-[10px] mt-4 text-center" style="color:var(--ink-dimmer)">Uploaded photos stay on this device. A photo URL is small enough to sync via Sheets instead.</p>
+      </div>
+    </div>
+  `;
+
+            document.getElementById('avatarBtn').addEventListener('click', () => document.getElementById('photoInput').click());
+            document.getElementById('photoInput').addEventListener('change', handlePhotoUpload);
+            document.getElementById('openMonthReportBtn').addEventListener('click', openMonthReport);
+            document.getElementById('togglePhotoUrlBtn').addEventListener('click', () => {
+                document.getElementById('photoUrlRow').classList.toggle('hidden');
+            });
+            document.getElementById('savePhotoUrlBtn').addEventListener('click', savePhotoUrl);
+            initProfilePhotoTilt();
+        }
+
+        /**
+         * 3D tilt + shine on the profile hero photo — tracks the pointer
+         * across the photo, rotating it slightly toward the cursor (GSAP,
+         * eased) while a radial-gradient shine follows the same position.
+         * Guarded to mouse-type pointers only: on touch, "tilt" would mean
+         * "briefly jerk toward wherever you tapped, then snap back," which
+         * reads as broken rather than glossy — touch just gets the static
+         * photo and its normal tap-to-change behavior.
+         */
+        function initProfilePhotoTilt() {
+            const tilt = document.getElementById('profilePhotoTilt');
+            const btn = document.getElementById('avatarBtn');
+            if (!tilt || !btn || typeof gsap === 'undefined') return;
+            tilt.addEventListener('pointermove', (e) => {
+                if (e.pointerType && e.pointerType !== 'mouse') return;
+                const rect = tilt.getBoundingClientRect();
+                const px = (e.clientX - rect.left) / rect.width;
+                const py = (e.clientY - rect.top) / rect.height;
+                gsap.to(btn, { rotateX: (0.5 - py) * 16, rotateY: (px - 0.5) * 16, transformPerspective: 900, duration: 0.35, ease: 'power2.out' });
+                tilt.style.setProperty('--mx', (px * 100) + '%');
+                tilt.style.setProperty('--my', (py * 100) + '%');
+                tilt.classList.add('shine-active');
+            });
+            tilt.addEventListener('pointerleave', (e) => {
+                if (e.pointerType && e.pointerType !== 'mouse') return;
+                gsap.to(btn, { rotateX: 0, rotateY: 0, duration: 0.5, ease: 'power3.out' });
+                tilt.classList.remove('shine-active');
+            });
+        }
+
+        /**
+         * A pasted photo URL is a few dozen bytes — unlike an uploaded
+         * photo (a few-hundred-KB base64 blob, deliberately kept local
+         * only) — so it's cheap enough to actually push to the Profile
+         * sheet and sync across devices via the normal saveProfile action.
+         */
+        async function savePhotoUrl() {
+            const input = document.getElementById('photoUrlInput');
+            const url = input.value.trim();
+            if (!url) return;
+            const profile = await getStore('profile', { name: 'Dini', photo: null });
+            profile.photo = url;
+            profile.photoIsUrl = true;
+            await setStore('profile', profile);
+            sheetsCall('saveProfile', { name: profile.name || 'Dini', photoUrl: url });
+            renderProfile();
+        }
+        function handlePhotoUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const img = new Image();
+            const reader = new FileReader();
+            reader.onload = ev => { img.onload = () => cropAndStorePhoto(img); img.src = ev.target.result; };
+            reader.readAsDataURL(file);
+        }
+        async function cropAndStorePhoto(img) {
+            const size = 300;
+            const canvas = document.createElement('canvas');
+            canvas.width = size; canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            const minSide = Math.min(img.width, img.height);
+            const sx = (img.width - minSide) / 2, sy = (img.height - minSide) / 2;
+            ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, size, size);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            const profile = await getStore('profile', { name: 'Dini', photo: null });
+            profile.photo = dataUrl;
+            profile.photoIsUrl = false;
+            await setStore('profile', profile);
+            sheetsCall('saveProfile', { name: profile.name || 'Dini' });
+            renderProfile();
+        }
+
+        /* ================= Month Report ================= */
+        let reportMonthOffset = 0; // 0 = current month, -1 = previous month, etc. Never allowed to go positive (future).
+        function reportMonthDate(offset) {
+            const d = new Date();
+            d.setDate(1);
+            d.setMonth(d.getMonth() + offset);
+            return d;
+        }
+        function dateKeyFor(year, month, day) {
+            return localDateKey(new Date(year, month, day));
+        }
+        async function openMonthReport() {
+            reportMonthOffset = 0;
+            await renderMonthReport();
+            const overlay = document.getElementById('monthReportOverlay');
+            overlay.classList.remove('hidden'); overlay.classList.add('flex');
+            gsap.fromTo(overlay.firstElementChild, { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3, ease: 'power3.out' });
+        }
+        function closeMonthReport() {
+            document.getElementById('monthReportOverlay').classList.add('hidden');
+            document.getElementById('monthReportOverlay').classList.remove('flex');
+        }
+        async function renderMonthReport() {
+            const base = reportMonthDate(reportMonthOffset);
+            const year = base.getFullYear(), month = base.getMonth();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            document.getElementById('reportMonthLabel').textContent = base.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+            document.getElementById('reportNextMonth').classList.toggle('opacity-30', reportMonthOffset >= 0);
+            document.getElementById('reportNextMonth').classList.toggle('pointer-events-none', reportMonthOffset >= 0);
+
+            const todayStr = todayKey();
+            const dayKeys = [];
+            for (let d = 1; d <= daysInMonth; d++) dayKeys.push(dateKeyFor(year, month, d));
+
+            const progressByDay = {};
+            for (const k of dayKeys) progressByDay[k] = await getStore('timetable:' + k, {});
+
+            const headerCells = dayKeys.map((k, i) =>
+                `<th class="report-daynum ${k === todayStr ? 'is-today' : ''}">${i + 1}</th>`).join('');
+
+            const scheduleRows = SCHEDULE.map(item => {
+                const cells = dayKeys.map(k => {
+                    if (k > todayStr) return `<td class="report-cell"></td>`;
+                    const done = !!progressByDay[k][item.id];
+                    return `<td class="report-cell">${done ? '<span class="report-check">✓</span>' : ''}</td>`;
+                }).join('');
+                return `<tr><th class="report-rowhead" title="${item.title.replace(/"/g, '&quot;')}">${item.title}</th>${cells}</tr>`;
+            }).join('');
+
+            document.getElementById('reportScheduleWrap').innerHTML = `
+    <table class="report-table">
+      <thead><tr><th class="report-rowhead-header">Block</th>${headerCells}</tr></thead>
+      <tbody>${scheduleRows}</tbody>
+    </table>`;
+
+            const tasks = await loadTasksCache();
+            const monthTasks = tasks.filter(t => (t.timeLog || []).some(e => dayKeys.includes(e.date)));
+            const clientSection = document.getElementById('reportClientSection');
+            if (monthTasks.length) {
+                const taskRows = monthTasks.map(t => {
+                    const cells = dayKeys.map(k => {
+                        const entry = (t.timeLog || []).find(e => e.date === k);
+                        return `<td class="report-cell">${entry ? `<span class="report-time">${minutesToLabel(entry.minutes)}</span>` : ''}</td>`;
+                    }).join('');
+                    const label = `${t.clientId} — ${t.description}`;
+                    return `<tr><th class="report-rowhead" title="${label.replace(/"/g, '&quot;')}">${label}</th>${cells}</tr>`;
+                }).join('');
+                document.getElementById('reportClientWrap').innerHTML = `
+    <table class="report-table">
+      <thead><tr><th class="report-rowhead-header">Task</th>${headerCells}</tr></thead>
+      <tbody>${taskRows}</tbody>
+    </table>`;
+                clientSection.classList.remove('hidden');
+            } else {
+                clientSection.classList.add('hidden');
+            }
+        }
+
+        /* ================= Tabs ================= */
+        function initTabs() {
+            const buttons = document.querySelectorAll('.tab-btn');
+            const indicator = document.getElementById('tabIndicator');
+            const fab = document.getElementById('fabAdd');
+            const views = { timetable: document.getElementById('view-timetable'), clients: document.getElementById('view-clients'), profile: document.getElementById('view-profile') };
+            buttons.forEach((btn, idx) => {
+                btn.addEventListener('click', () => {
+                    buttons.forEach(b => b.style.color = 'var(--ink-dim)');
+                    btn.style.color = 'var(--ink)';
+                    gsap.to(indicator, { xPercent: idx * 100, duration: 0.4, ease: 'power3.out' });
+                    const targetKey = btn.dataset.tab;
+                    const current = Object.values(views).find(v => !v.classList.contains('hidden'));
+                    gsap.to(current, {
+                        opacity: 0, y: 8, duration: 0.15, onComplete: () => {
+                            Object.entries(views).forEach(([k, v]) => v.classList.toggle('hidden', k !== targetKey));
+                            fab.classList.toggle('hidden', targetKey !== 'clients');
+                            fab.classList.toggle('flex', targetKey === 'clients');
+                            if (targetKey === 'profile') renderProfile();
+                            gsap.fromTo(views[targetKey], { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.25 });
+                        }
+                    });
+                });
+            });
+            buttons[0].style.color = 'var(--ink)';
+        }
+
+        /* ================= Settings ================= */
+        async function openSettings() {
+            const settings = await getSettings();
+            document.getElementById('inputSheetsUrl').value = settings.sheetsUrl || '';
+            document.getElementById('inputSheetsUrl').placeholder = 'https://script.google.com/macros/s/.../exec';
+            document.getElementById('inputAlarmUrl').value = settings.alarmUrl || '';
+            const lastSynced = await getStore('schedule-last-synced', null);
+            document.getElementById('scheduleSyncedText').textContent = formatLastSynced(lastSynced);
+            await updateSyncBadgeFromQueue();
+            const overlay = document.getElementById('settingsOverlay');
+            overlay.classList.remove('hidden'); overlay.classList.add('flex');
+            gsap.fromTo(overlay.firstElementChild, { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3, ease: 'power3.out' });
+        }
+        function closeSettings() {
+            document.getElementById('settingsOverlay').classList.add('hidden');
+            document.getElementById('settingsOverlay').classList.remove('flex');
+        }
+
+        /* ================= Init ================= */
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initTheme();
+            initBlobs();
+            initTabs();
+            document.getElementById('dateLabel').textContent = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
+            await maybeShowOnboarding();
+
+            await initSchedule();
+            await scheduleNativeAlarms();
+            await autoMergeFromSheets();
+            await renderTimetable();
+            await renderClientTasks();
+            retryQueue();
+
+            const currentId = getCurrentBlockId();
+            if (currentId) { const el = document.getElementById('block-' + currentId); if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 400); }
+
+            setInterval(renderTimetable, 60000);
+            setInterval(tickCountdowns, 1000);
+            setInterval(alarmTick, 5000);
+            setInterval(retryQueue, 45000);
+            if (window.matchMedia) {
+                const desktopMq = window.matchMedia('(min-width: 900px)');
+                const onBreakpointChange = () => renderDesktopCalendarPanel();
+                if (desktopMq.addEventListener) desktopMq.addEventListener('change', onBreakpointChange);
+                else if (desktopMq.addListener) desktopMq.addListener(onBreakpointChange);
+            }
+
+            document.getElementById('fabAdd').addEventListener('click', () => openModal(null));
+            document.getElementById('modalClose').addEventListener('click', closeModal);
+            document.getElementById('saveTaskBtn').addEventListener('click', saveTask);
+            document.querySelectorAll('.status-option').forEach(btn => btn.addEventListener('click', () => setStatusUI(btn.dataset.status)));
+
+            document.getElementById('reflectionClose').addEventListener('click', finishReflection);
+            document.getElementById('reflectionNextBtn').addEventListener('click', () => {
+                const step = REFLECTION_STEPS[reflectionStepIdx];
+                if (step.type === 'text') finishReflection(); else nextReflectionStep();
+            });
+
+            document.getElementById('checkinClose').addEventListener('click', closeCheckin);
+            document.getElementById('checkinNextBtn').addEventListener('click', () => {
+                const step = CHECKIN_STEPS[checkinStepIdx];
+                if (step.type === 'text') finishCheckin(); else nextCheckinStep();
+            });
+
+            document.getElementById('toastUndo').addEventListener('click', async () => {
+                if (!pendingDelete) return;
+                const tasks = await loadTasksCache();
+                tasks.splice(pendingDelete.index, 0, pendingDelete.task);
+                await persistTasksCache();
+                sheetsCall('upsertTask', { id: pendingDelete.task.id, clientId: pendingDelete.task.clientId, description: pendingDelete.task.description, startDate: pendingDelete.task.startDate, endDate: pendingDelete.task.endDate, status: normalizedStatus(pendingDelete.task), totalMinutes: taskTotalMinutes(pendingDelete.task) });
+                pendingDelete = null;
+                clearTimeout(toastTimeout);
+                hideToast();
+                renderClientTasks();
+            });
+
+            document.getElementById('copyBackendScriptBtn').addEventListener('click', copyBackendScript);
+            document.getElementById('onboardingTestBtn').addEventListener('click', testAndContinueOnboarding);
+            document.getElementById('onboardingSkipBtn').addEventListener('click', skipOnboarding);
+
+            document.querySelectorAll('.theme-option').forEach(btn => {
+                btn.addEventListener('click', () => setTheme(btn.dataset.themeChoice));
+            });
+            document.getElementById('settingsBtn').addEventListener('click', openSettings);
+            document.getElementById('settingsClose').addEventListener('click', closeSettings);
+            document.getElementById('retrySyncBtn').addEventListener('click', retryQueue);
+            document.getElementById('restoreBtn').addEventListener('click', restoreFromSheets);
+            document.getElementById('refreshScheduleBtn').addEventListener('click', async () => {
+                const fetched = await fetchAndCacheSchedule(true);
+                if (fetched && fetched.length) { SCHEDULE = fetched; await renderTimetable(); await scheduleNativeAlarms(); }
+                const lastSynced = await getStore('schedule-last-synced', null);
+                document.getElementById('scheduleSyncedText').textContent = formatLastSynced(lastSynced);
+            });
+            document.getElementById('overrideClose').addEventListener('click', closeOverride);
+            document.getElementById('saveOverrideBtn').addEventListener('click', saveOverride);
+            document.getElementById('clearOverrideBtn').addEventListener('click', clearOverride);
+            document.getElementById('monthReportClose').addEventListener('click', closeMonthReport);
+            document.getElementById('reportPrevMonth').addEventListener('click', () => { reportMonthOffset--; renderMonthReport(); });
+            document.getElementById('reportNextMonth').addEventListener('click', () => { if (reportMonthOffset < 0) { reportMonthOffset++; renderMonthReport(); } });
+            document.getElementById('enableAlarmsBtn').addEventListener('click', async () => {
+                if ('Notification' in window) { try { await Notification.requestPermission(); } catch (e) { } }
+                try {
+                    const ctx = window.__alarmCtx || (window.__alarmCtx = new (window.AudioContext || window.webkitAudioContext)());
+                    if (ctx.state === 'suspended') await ctx.resume();
+                } catch (e) { }
+                showToast('Alarms enabled for this session');
+            });
+            document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
+                const url = document.getElementById('inputSheetsUrl').value.trim();
+                const alarmUrl = document.getElementById('inputAlarmUrl').value.trim();
+                const existing = await getSettings();
+                await setStore('settings', { ...existing, sheetsUrl: url, alarmUrl, onboardingDone: true });
+                closeSettings();
+                retryQueue();
+            });
+            document.getElementById('resetDayBtn').addEventListener('click', async () => {
+                await setStore('timetable:' + todayKey(), {});
+                renderTimetable();
+                closeSettings();
+            });
+
+            document.getElementById('logTimeClose').addEventListener('click', closeLogTime);
+            document.querySelectorAll('.log-time-quick').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    if (!activeLogTaskId) return;
+                    const t = await logMinutesToTask(activeLogTaskId, parseInt(btn.dataset.min, 10));
+                    if (t) document.getElementById('logTimeTotal').textContent = minutesToLabel(taskTotalMinutes(t)) + ' logged so far';
+                    gsap.fromTo(btn, { scale: 0.9 }, { scale: 1, duration: 0.3, ease: 'back.out(2)' });
+                });
+            });
+            document.getElementById('addCustomMinutesBtn').addEventListener('click', async () => {
+                if (!activeLogTaskId) return;
+                const input = document.getElementById('customMinutesInput');
+                const val = parseInt(input.value, 10);
+                if (!val || val <= 0) return;
+                const t = await logMinutesToTask(activeLogTaskId, val);
+                if (t) { document.getElementById('logTimeTotal').textContent = minutesToLabel(taskTotalMinutes(t)) + ' logged so far'; input.value = ''; }
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.task-menu-wrap')) document.querySelectorAll('.task-menu').forEach(m => m.classList.add('hidden'));
+            });
+
+            gsap.fromTo('main > div:not(.hidden)', { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' });
+            gsap.fromTo('header', { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.4 });
+        });
+    </script>
+</body>
+
+</html>
